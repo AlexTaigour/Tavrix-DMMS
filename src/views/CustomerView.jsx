@@ -10,7 +10,7 @@ import AnimatedList from '../components/reactbits/AnimatedList';
 import ClickSpark from '../components/reactbits/ClickSpark';
 import ShinyButton from '../components/reactbits/ShinyButton';
 import CountUp from '../components/reactbits/CountUp';
-import { CAFE_NAME, CAFE_LOGO } from '../utils/brand';
+import { CAFE_NAME, CAFE_TAGLINE, CAFE_LOGO } from '../utils/brand';
 
 // Returning customers skip retyping their details.
 const saved = (() => {
@@ -277,7 +277,7 @@ const CustomerView = () => {
             />
             <div className="min-w-0">
               <p className="truncate font-bold leading-tight text-bean sm:text-lg">{CAFE_NAME}</p>
-              <p className="mt-1 truncate text-xs text-bean/60 sm:text-sm">Ek Cup Chiya, Dherai Kura</p>
+              <p className="mt-1 truncate text-xs text-bean/60 sm:text-sm">{CAFE_TAGLINE}</p>
             </div>
           </div>
           <button
@@ -434,7 +434,7 @@ const CustomerView = () => {
               <AnimatedList
                 items={section.items}
                 keyOf={(item) => item.id}
-                className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
+                className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
                 renderItem={(item) => (
                   <MenuCard
                     item={item}

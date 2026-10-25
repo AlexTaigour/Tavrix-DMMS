@@ -198,7 +198,7 @@ server.listen(PORT, '0.0.0.0', async () => {
   const [users, menu, orders] = await Promise.all(
     ['users', 'menu_items', 'orders'].map(countRows)
   );
-  console.log(`✅ Folsom Cafe & Resturent server on http://0.0.0.0:${PORT}`);
+  console.log(`✅ Tavrix DMMS server on http://0.0.0.0:${PORT}`);
   console.log(`   db: ${users} users, ${menu} menu items, ${orders} orders (Supabase)`);
 });
 

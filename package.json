@@ -1,9 +1,9 @@
 {
-  "name": "folsom-cafe-pos",
+  "name": "tavrix-dmms",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Folsom Cafe & Resturent — LAN tea-shop POS (browser-based)",
+  "description": "Tavrix DMMS — LAN tea-shop POS (browser-based)",
   "author": "Alex Taigour",
   "engines": {
     "node": ">=20.0.0"

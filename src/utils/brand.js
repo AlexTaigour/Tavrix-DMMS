@@ -1,4 +1,4 @@
-export const CAFE_NAME = 'Folsom Cafe & Restaurant';
+export const CAFE_NAME = 'Tavrix DMMS';
 export const CAFE_TAGLINE = 'Enjoy fresh, tasty food in a cozy and friendly atmosphere.';
 export const CAFE_LOGO = '/resources/logo.png';
 export const PLATFORM_NAME = 'Tavrix';

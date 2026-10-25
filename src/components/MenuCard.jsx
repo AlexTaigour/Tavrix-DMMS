@@ -24,6 +24,7 @@ export const MenuCard = ({ item, quantity, onUpdateQuantity, onOpenDetail }) => 
               src={item.image}
               alt=""
               loading="lazy"
+              decoding="async"
               onError={() => setImgFailed(true)}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -61,41 +62,44 @@ export const MenuCard = ({ item, quantity, onUpdateQuantity, onOpenDetail }) => 
           {item.description && <span className="line-clamp-2">{item.description}</span>}
         </p>
 
-        <div className="mt-auto flex items-center justify-between gap-2 border-t border-espresso/10 pt-2.5">
-          <p className="text-sm font-black text-bean sm:text-base">Rs. {item.price}</p>
-          {quantity === 0 ? (
-            <button
-              type="button"
-              disabled={soldOut}
-              onClick={() => onUpdateQuantity(item.id, 1)}
-              aria-label={`Add ${item.name} to order`}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-chiya text-white transition-colors hover:bg-espresso active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-11 sm:w-11"
-            >
-              <Plus size={18} />
-            </button>
-          ) : (
-            <div className="flex shrink-0 items-center rounded-full border border-espresso/10 bg-cream">
-              <button
-                type="button"
-                disabled={soldOut}
-                onClick={() => onUpdateQuantity(item.id, -1)}
-                aria-label={`Remove one ${item.name}`}
-                className="flex h-10 w-9 items-center justify-center rounded-l-full text-espresso transition-colors hover:bg-white disabled:pointer-events-none sm:h-11 sm:w-10"
-              >
-                <Minus size={15} />
-              </button>
-              <span className="min-w-5 text-center text-sm font-bold text-bean">{quantity}</span>
+        <div className="mt-auto border-t border-espresso/10 pt-2.5">
+          <p className="whitespace-nowrap text-sm font-black text-bean sm:text-base">Rs. {item.price}</p>
+          <div className="mt-2 flex h-11 w-full items-center">
+            {quantity === 0 ? (
               <button
                 type="button"
                 disabled={soldOut}
                 onClick={() => onUpdateQuantity(item.id, 1)}
-                aria-label={`Add one ${item.name}`}
-                className="flex h-10 w-9 items-center justify-center rounded-r-full text-espresso transition-colors hover:bg-white disabled:pointer-events-none sm:h-11 sm:w-10"
+                aria-label={`Add ${item.name} to order`}
+                className="flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-chiya text-sm font-bold text-white transition-colors hover:bg-espresso active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
               >
-                <Plus size={15} />
+                <Plus size={17} />
+                <span>Add</span>
               </button>
-            </div>
-          )}
+            ) : (
+              <div className="flex h-11 w-full items-center justify-between rounded-xl border border-espresso/10 bg-cream">
+                <button
+                  type="button"
+                  disabled={soldOut}
+                  onClick={() => onUpdateQuantity(item.id, -1)}
+                  aria-label={`Remove one ${item.name}`}
+                  className="flex h-full w-11 shrink-0 items-center justify-center rounded-l-xl text-espresso transition-colors hover:bg-white disabled:pointer-events-none"
+                >
+                  <Minus size={16} />
+                </button>
+                <span aria-live="polite" className="min-w-0 flex-1 text-center text-sm font-bold text-bean">{quantity}</span>
+                <button
+                  type="button"
+                  disabled={soldOut}
+                  onClick={() => onUpdateQuantity(item.id, 1)}
+                  aria-label={`Add one ${item.name}`}
+                  className="flex h-full w-11 shrink-0 items-center justify-center rounded-r-xl text-espresso transition-colors hover:bg-white disabled:pointer-events-none"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </article>
