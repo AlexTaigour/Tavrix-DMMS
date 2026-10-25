@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ChevronDown, History, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronDown, Clock3, History, Loader2, ReceiptText, XCircle } from 'lucide-react';
 import { fetchOrderHistory } from '../../api/client';
 import { getSocket } from '../../api/socket';
 import { formatDateTime, formatRs, formatTime } from '../../utils/format';
@@ -74,22 +74,31 @@ export default function OrderHistoryTab() {
     setPreset('custom');
     setter(e.target.value);
   };
+  const paidCount = orders && !orders.error ? orders.filter((order) => order.paid && order.payment).length : 0;
+  const cancelledCount = orders && !orders.error ? orders.filter((order) => order.status === 'cancelled').length : 0;
+  const openCount = orders && !orders.error
+    ? orders.filter((order) => !order.paid && order.status !== 'cancelled').length
+    : 0;
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
-        <h2 className="text-3xl font-black text-bean tracking-tight flex items-center gap-3">
-          <History className="text-chiya" /> Order History
-        </h2>
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+            <History size={15} /> Sales records
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">Order History</h2>
+          <p className="mt-1 text-sm text-bean/55">Review orders, payment status, and customer details by date.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl bg-[#fff8f6] p-2">
           {PRESETS.map((p) => (
             <button
               key={p.key}
               onClick={() => applyPreset(p)}
-              className={`px-4 py-2.5 rounded-xl text-sm font-black transition-colors ${
+              className={`min-h-10 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
                 preset === p.key
                   ? 'bg-chiya text-white shadow-sm'
-                  : 'bg-white text-espresso border border-gray-100 shadow-sm hover:bg-cream'
+                  : 'bg-white text-bean/70 hover:bg-cream'
               }`}
             >
               {p.label}
@@ -100,18 +109,36 @@ export default function OrderHistoryTab() {
             value={fromDay}
             max={toDay}
             onChange={onDateChange(setFromDay)}
-            className="bg-white p-2.5 rounded-xl shadow-sm text-sm font-bold outline-none border border-gray-100"
+            aria-label="Start date"
+            className="min-h-10 rounded-lg border border-espresso/10 bg-white px-3 py-2 text-sm font-semibold text-bean outline-none focus:border-chiya"
           />
-          <span className="text-gray-400 font-black text-xs">to</span>
+          <span className="text-xs font-semibold text-bean/45">to</span>
           <input
             type="date"
             value={toDay}
             min={fromDay}
             onChange={onDateChange(setToDay)}
-            className="bg-white p-2.5 rounded-xl shadow-sm text-sm font-bold outline-none border border-gray-100"
+            aria-label="End date"
+            className="min-h-10 rounded-lg border border-espresso/10 bg-white px-3 py-2 text-sm font-semibold text-bean outline-none focus:border-chiya"
           />
         </div>
       </div>
+
+      {orders && !orders.error && (
+        <section aria-label="Order summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: 'Orders in range', value: orders.length, icon: ReceiptText, color: 'bg-chiya/10 text-chiya' },
+            { label: 'Paid orders', value: paidCount, icon: CheckCircle2, color: 'bg-green-50 text-green-700' },
+            { label: 'Open bills', value: openCount, icon: Clock3, color: 'bg-amber-50 text-amber-700' },
+            { label: 'Cancelled', value: cancelledCount, icon: XCircle, color: 'bg-gray-100 text-gray-500' },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <article key={label} className="flex items-center gap-3 rounded-2xl border border-espresso/10 bg-white p-4 shadow-sm">
+              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}><Icon size={19} /></span>
+              <div><p className="text-xs font-semibold text-bean/50">{label}</p><p className="mt-0.5 text-xl font-black text-bean">{value}</p></div>
+            </article>
+          ))}
+        </section>
+      )}
 
       {!orders ? (
         <div className="flex justify-center py-20">
@@ -120,9 +147,13 @@ export default function OrderHistoryTab() {
       ) : orders.error ? (
         <p className="text-red-500 font-bold">Failed to load order history.</p>
       ) : orders.length === 0 ? (
-        <p className="text-gray-400 font-bold py-16 text-center">No orders in this range.</p>
+        <div className="rounded-2xl border border-dashed border-espresso/20 bg-white px-6 py-16 text-center">
+          <History size={28} className="mx-auto mb-3 text-bean/30" />
+          <p className="font-bold text-bean">No orders in this date range</p>
+          <p className="mt-1 text-sm text-bean/50">Choose another date range to view past orders.</p>
+        </div>
       ) : (
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-espresso/10 bg-white shadow-sm">
           <table className="w-full text-left min-w-[860px]">
             <thead className="bg-cream text-espresso uppercase text-[10px] font-black tracking-widest">
               <tr>

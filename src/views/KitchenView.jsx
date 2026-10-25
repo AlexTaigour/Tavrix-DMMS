@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, BellOff, LogOut, ChefHat, Loader2, LayoutDashboard, KeyRound, PackageX, X } from 'lucide-react';
+import { Bell, BellOff, LogOut, ChefHat, Loader2, LayoutDashboard, KeyRound, PackageX, X, Radio, Clock3, ClipboardList } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useOrdersLive } from '../hooks/useOrdersLive';
 import { useSound } from '../hooks/useSound';
@@ -13,14 +13,20 @@ import { toast } from '../components/Toast';
 import { minutesSince } from '../utils/format';
 
 // KDS column definitions: which statuses land in which lane, and the primary
-// action for each card. Dark theme, oversized touch targets for tablets.
+// action for each card.
 const LANES = [
-  { key: 'new', title: 'New', statuses: ['pending'], accent: 'border-orange-500', action: { to: 'accepted', label: 'Accept', style: 'bg-amber-500' } },
-  { key: 'accepted', title: 'Accepted', statuses: ['accepted'], accent: 'border-amber-400', action: { to: 'preparing', label: 'Start', style: 'bg-blue-500' } },
-  { key: 'preparing', title: 'Preparing', statuses: ['preparing'], accent: 'border-blue-500', action: { to: 'cooked', label: 'Cooked ✓', style: 'bg-purple-500' } },
+  { key: 'new', title: 'New', statuses: ['pending'], accent: 'border-chiya', action: { to: 'accepted', label: 'Accept order', style: 'bg-chiya hover:bg-red-700' } },
+  { key: 'accepted', title: 'Accepted', statuses: ['accepted'], accent: 'border-amber-400', action: { to: 'preparing', label: 'Start preparing', style: 'bg-espresso hover:bg-bean' } },
+  { key: 'preparing', title: 'Preparing', statuses: ['preparing'], accent: 'border-green-500', action: { to: 'cooked', label: 'Mark ready', style: 'bg-green-700 hover:bg-green-800' } },
 ];
 
 const LATE_MINUTES = 15;
+
+function formatElapsed(minutes) {
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes < 1440) return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  return `${Math.floor(minutes / 1440)}d ${Math.floor((minutes % 1440) / 60)}h`;
+}
 
 function KdsCard({ order, action, onStatusLocal }) {
   const [busy, setBusy] = useState(false);
@@ -47,48 +53,61 @@ function KdsCard({ order, action, onStatusLocal }) {
     }
   };
 
+  const isLate = mins >= LATE_MINUTES;
+  const isTakeaway = order.orderType === 'takeaway';
+
   return (
-    <div className="bg-slate-800 rounded-2xl p-4 border border-slate-700">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <p className="text-2xl font-black text-white">
-            {order.orderType === 'takeaway' ? `🥡 #${order.queueNo ?? '–'}` : `T${order.table}`}
+    <article className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${isLate ? 'border-red-300' : 'border-espresso/10'}`}>
+      {isLate && <div className="h-1 bg-red-500" />}
+      <div className="p-4 sm:p-5">
+      <div className="mb-3 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <span className={`mb-1 inline-flex rounded-md px-2 py-1 text-[10px] font-black uppercase tracking-wider ${isTakeaway ? 'bg-cream text-espresso' : 'bg-rose-50 text-chiya'}`}>
+            {isTakeaway ? 'Takeaway' : 'Dine in'}
+          </span>
+          <p className="text-3xl font-black leading-tight text-bean">
+            {isTakeaway ? `#${order.queueNo ?? '–'}` : `Table ${order.table}`}
           </p>
-          <p className="text-[10px] text-slate-400 font-bold">{order.publicCode}</p>
+          <p className="mt-1 truncate text-xs font-semibold text-bean/55">{order.name || 'Walk-in'} <span className="px-1 text-bean/25">·</span> {order.publicCode}</p>
         </div>
-        <span className={`text-xs font-black px-2.5 py-1 rounded-full ${mins >= LATE_MINUTES ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-700 text-slate-300'}`}>
-          {mins}m
+        <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-black ${isLate ? 'bg-red-50 text-red-700' : 'bg-cream text-bean/70'}`}>
+          <Clock3 size={13} /> {formatElapsed(mins)}
         </span>
       </div>
-      <ul className="space-y-1.5 mb-3">
+      <ul className="mb-3 space-y-2.5 rounded-xl bg-[#fff8f6] p-3.5">
         {order.items.map((it) => (
-          <li key={it.id} className="text-white font-bold text-lg leading-tight">
-            <span className="text-chiya">{it.qty}×</span> {it.name}
+          <li key={it.id} className="flex items-start gap-2.5 text-lg font-bold leading-snug text-bean">
+            <span className="min-w-10 rounded-lg bg-chiya px-2 py-1 text-center text-sm font-black text-white">{it.qty}×</span>
+            <span className="pt-0.5">{it.name}</span>
           </li>
         ))}
       </ul>
       {order.note && (
-        <p className="text-amber-300 text-sm font-bold bg-amber-500/10 rounded-lg px-3 py-2 mb-3 break-words">
-          ⚠ {order.note}
+        <p className="mb-3 break-words rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm font-semibold text-amber-950">
+          <span className="mb-0.5 block text-[10px] font-black uppercase tracking-wider text-amber-700">Kitchen note</span>
+          {order.note}
         </p>
       )}
       <div className="flex gap-2">
         <button
           onClick={() => act(action.to)}
           disabled={busy}
-          className={`flex-1 ${action.style} text-white py-4 rounded-xl font-black text-lg active:scale-95 transition-transform disabled:opacity-50`}
+          className={`min-h-14 flex-1 rounded-xl py-3 text-base font-black text-white transition-transform active:scale-[0.98] disabled:opacity-50 ${action.style}`}
         >
-          {action.label}
+          {busy ? 'Updating…' : action.label}
         </button>
         <button
           onClick={() => window.confirm('Cancel this order?') && act('cancelled')}
           disabled={busy}
-          className="px-4 bg-slate-700 text-red-400 rounded-xl font-black text-sm disabled:opacity-50"
+          className="min-h-14 min-w-14 rounded-xl border border-espresso/10 bg-white px-4 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+          aria-label={`Cancel order ${order.publicCode}`}
+          title="Cancel order"
         >
           ✕
         </button>
       </div>
-    </div>
+      </div>
+    </article>
   );
 }
 
@@ -174,68 +193,125 @@ export default function KitchenView() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { enabled, toggle, chime } = useSound('tvx_sound_kds');
-  const { orders, loading, applyStatusLocal } = useOrdersLive({ onNewOrder: chime });
+  const { orders: liveOrders, loading, applyStatusLocal } = useOrdersLive({ onNewOrder: chime });
   const [showChangePw, setShowChangePw] = useState(false);
   const [showStock, setShowStock] = useState(false);
+  const [selectedLane, setSelectedLane] = useState('new');
+  const orders = liveOrders || [];
+  const newCount = orders.filter((order) => order.status === 'pending').length;
+  const activeCount = orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)).length;
+  const lateCount = orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)
+    && minutesSince(order.createdAt) >= LATE_MINUTES).length;
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      <header className="bg-slate-900 text-white px-4 md:px-8 py-4 flex items-center justify-between sticky top-0 z-40 border-b border-slate-800">
+    <div className="min-h-screen bg-[#fff8f6] text-bean">
+      <header className="sticky top-0 z-40 border-b border-espresso/10 bg-white/95 px-4 py-3 text-bean backdrop-blur md:px-8">
+        <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="bg-chiya p-2.5 rounded-xl">
+          <div className="rounded-xl bg-chiya p-2.5 text-white shadow-sm">
             <ChefHat size={20} />
           </div>
           <div>
-            <h1 className="font-black text-lg leading-tight">Kitchen Display</h1>
-            <p className="text-[10px] uppercase font-black text-slate-500 tracking-widest">{user?.displayName}</p>
+            <h1 className="text-base font-black leading-tight md:text-lg">Kitchen</h1>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-bean/45">{user?.displayName}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowStock(true)} className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-red-300" title="Mark items sold out">
+        <div className="flex items-center gap-1.5">
+          <span className="mr-1 hidden items-center gap-1.5 rounded-full bg-green-50 px-3 py-2 text-xs font-bold text-green-700 sm:inline-flex">
+            <Radio size={14} /> Live
+          </span>
+          <button onClick={() => setShowStock(true)} className="rounded-xl p-3 text-bean/60 transition-colors hover:bg-cream hover:text-chiya" title="Mark items sold out" aria-label="Mark items sold out">
             <PackageX size={18} />
           </button>
           {user?.role === 'owner' && (
-            <button onClick={() => navigate('/owner')} className="p-3 rounded-xl bg-white/5 hover:bg-white/10" title="Owner dashboard">
+            <button onClick={() => navigate('/owner')} className="rounded-xl p-3 text-bean/60 transition-colors hover:bg-cream hover:text-bean" title="Owner dashboard" aria-label="Owner dashboard">
               <LayoutDashboard size={18} />
             </button>
           )}
-          <button onClick={toggle} className="p-3 rounded-xl bg-white/5 hover:bg-white/10" title="Sound alerts">
+          <button onClick={toggle} className="rounded-xl p-3 text-bean/60 transition-colors hover:bg-cream hover:text-bean" title="Sound alerts" aria-label="Toggle sound alerts">
             {enabled ? <Bell size={18} /> : <BellOff size={18} className="text-red-400" />}
           </button>
-          <button onClick={() => setShowChangePw(true)} className="p-3 rounded-xl bg-white/5 hover:bg-white/10" title="Change my password">
+          <button onClick={() => setShowChangePw(true)} className="rounded-xl p-3 text-bean/60 transition-colors hover:bg-cream hover:text-bean" title="Change my password" aria-label="Change my password">
             <KeyRound size={18} />
           </button>
-          <button onClick={() => logout().then(() => navigate('/login'))} className="p-3 rounded-xl text-red-400 hover:bg-red-400/10" title="Logout">
+          <button onClick={() => logout().then(() => navigate('/login'))} className="rounded-xl p-3 text-chiya transition-colors hover:bg-rose-50" title="Logout" aria-label="Logout">
             <LogOut size={18} />
           </button>
+        </div>
         </div>
       </header>
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <BrewingLoader tone="dark" label="Loading orders" />
+          <BrewingLoader tone="light" label="Loading kitchen orders" />
         </div>
       ) : (
-        <main className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[1600px] mx-auto">
+        <main className="mx-auto max-w-[1800px] p-4 md:p-6">
+          <section aria-label="Kitchen queue summary" className="mb-5 grid gap-3 sm:grid-cols-3">
+            {[
+              { label: 'Orders in kitchen', value: activeCount, icon: ClipboardList, color: 'bg-chiya/10 text-chiya' },
+              { label: 'New orders', value: newCount, icon: Radio, color: 'bg-amber-50 text-amber-700' },
+              { label: 'Running late', value: lateCount, icon: Clock3, color: lateCount ? 'bg-red-50 text-red-700' : 'bg-cream text-bean/45' },
+            ].map(({ label, value, icon: Icon, color }) => (
+              <article key={label} className="flex items-center gap-3 rounded-2xl border border-espresso/10 bg-white p-4 shadow-sm">
+                <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}><Icon size={19} /></span>
+                <div><p className="text-xs font-semibold text-bean/50">{label}</p><p className="mt-0.5 text-xl font-black text-bean">{value}</p></div>
+              </article>
+            ))}
+          </section>
+          <div className="mb-4">
+            <h2 className="text-lg font-black text-bean">Kitchen queue</h2>
+            <p className="mt-0.5 text-xs text-bean/55">Work oldest tickets first. Orders are flagged after {LATE_MINUTES} minutes.</p>
+          </div>
+          <nav aria-label="Kitchen order stages" className="mb-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
+            {LANES.map((lane) => {
+              const count = orders.filter((order) => lane.statuses.includes(order.status)).length;
+              const active = selectedLane === lane.key;
+              return (
+                <button
+                  key={lane.key}
+                  onClick={() => setSelectedLane(lane.key)}
+                  aria-pressed={active}
+                  className={`flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold transition-colors ${active ? 'border-chiya bg-chiya text-white shadow-sm' : 'border-espresso/10 bg-white text-bean/70'}`}
+                >
+                  {lane.title}<span className={`rounded-full px-2 py-0.5 text-xs ${active ? 'bg-white/20 text-white' : 'bg-cream text-bean/65'}`}>{count}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {LANES.map((lane) => {
             const laneOrders = orders
               .filter((o) => lane.statuses.includes(o.status))
               .sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest first
             return (
-              <section key={lane.key} className={`bg-slate-900 rounded-3xl border-t-4 ${lane.accent} min-h-[70vh]`}>
-                <h2 className="text-white font-black uppercase tracking-widest text-sm px-5 py-4 flex items-center justify-between">
-                  {lane.title}
-                  <span className="bg-slate-700 text-slate-200 rounded-full px-3 py-0.5">{laneOrders.length}</span>
+              <section
+                key={lane.key}
+                aria-label={`${lane.title} orders`}
+                className={`${lane.key === selectedLane ? 'block' : 'hidden md:block'} min-h-[260px] rounded-2xl border border-espresso/10 border-t-4 bg-white shadow-sm ${lane.accent}`}
+              >
+                <h2 className="flex items-center justify-between rounded-t-xl bg-white px-4 py-4 text-sm font-black uppercase tracking-widest text-bean">
+                  <span>{lane.title} orders</span>
+                  <span className="rounded-full bg-cream px-3 py-1 text-xs text-bean/70">{laneOrders.length}</span>
                 </h2>
-                <AnimatedList
-                  items={laneOrders}
-                  keyOf={(o) => o.id}
-                  className="px-4 pb-4 space-y-3"
-                  renderItem={(order) => <KdsCard order={order} action={lane.action} onStatusLocal={applyStatusLocal} />}
-                />
+                {laneOrders.length ? (
+                  <AnimatedList
+                    items={laneOrders}
+                    keyOf={(o) => o.id}
+                    className="space-y-3 px-3 pb-3 md:px-4"
+                    renderItem={(order) => <KdsCard order={order} action={lane.action} onStatusLocal={applyStatusLocal} />}
+                  />
+                ) : (
+                  <div className="px-4 pb-6 pt-8 text-center">
+                    <ChefHat size={24} className="mx-auto mb-2 text-bean/25" />
+                    <p className="text-sm font-bold text-bean/65">No {lane.title.toLowerCase()} orders</p>
+                    <p className="mt-1 text-xs text-bean/40">New tickets appear here automatically.</p>
+                  </div>
+                )}
               </section>
             );
           })}
+          </div>
         </main>
       )}
 

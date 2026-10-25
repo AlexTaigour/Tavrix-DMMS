@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, X, KeyRound, UserX, UserCheck, Loader2, CheckCircle2 } from 'lucide-react';
+import { Plus, X, KeyRound, UserX, UserCheck, Loader2, CheckCircle2, Users } from 'lucide-react';
 import { fetchUsers, createUser, updateUser } from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 
@@ -79,6 +79,8 @@ export default function UsersTab() {
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const activeCount = users.filter((u) => u.isActive).length;
+  const staffCount = users.filter((u) => u.role === 'staff' || u.role === 'kitchen').length;
 
   const refresh = () => fetchUsers().then(setUsers).catch(() => {});
   useEffect(() => { refresh(); }, []);
@@ -110,17 +112,36 @@ export default function UsersTab() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-black text-bean tracking-tight">Users</h2>
-        <button onClick={() => { setForm(EMPTY); setError(''); setShowAdd(true); }} className="bg-espresso hover:bg-bean text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 shadow-md transition-all active:scale-95">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+            <Users size={15} /> Team access
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">Users</h2>
+          <p className="mt-1 text-sm text-bean/55">Manage who can access the owner, counter, and kitchen workspaces.</p>
+        </div>
+        <button onClick={() => { setForm(EMPTY); setError(''); setShowAdd(true); }} className="flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700">
           <Plus size={20} /> New User
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100 overflow-x-auto">
+      <section aria-label="Team summary" className="grid gap-3 sm:grid-cols-3">
+        {[
+          ['Total accounts', users.length],
+          ['Active', activeCount],
+          ['Staff & kitchen', staffCount],
+        ].map(([label, value]) => (
+          <article key={label} className="rounded-2xl border border-espresso/10 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold text-bean/50">{label}</p>
+            <p className="mt-1 text-xl font-black text-bean">{value}</p>
+          </article>
+        ))}
+      </section>
+
+      <div className="overflow-x-auto rounded-2xl border border-espresso/10 bg-white shadow-sm">
         <table className="w-full text-left min-w-[520px]">
-          <thead className="bg-cream text-espresso uppercase text-[10px] font-black">
+          <thead className="bg-[#fff8f6] text-bean/55 uppercase text-[10px] font-bold tracking-wider">
             <tr>
               <th className="px-6 py-5">User</th>
               <th className="px-6 py-5">Role</th>
@@ -130,15 +151,19 @@ export default function UsersTab() {
           </thead>
           <tbody>
             {users.map((u) => (
-              <tr key={u.id} className={`border-b border-gray-50 ${!u.isActive ? 'opacity-50' : ''}`}>
+              <tr key={u.id} className={`border-b border-espresso/5 transition-colors hover:bg-[#fff8f6]/70 ${!u.isActive ? 'opacity-50' : ''}`}>
                 <td className="px-6 py-4">
-                  <p className="font-black text-bean">{u.displayName}</p>
-                  <p className="text-xs text-gray-400 font-bold">@{u.username}{u.id === me?.id && ' (you)'}</p>
+                  <p className="font-bold text-bean">{u.displayName}</p>
+                  <p className="text-xs font-medium text-bean/50">@{u.username}{u.id === me?.id && ' (you)'}</p>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`text-xs font-black px-3 py-1 rounded-full uppercase ${ROLE_STYLES[u.role]}`}>{u.role}</span>
                 </td>
-                <td className="px-6 py-4 text-sm font-bold">{u.isActive ? 'Active' : 'Disabled'}</td>
+                <td className="px-6 py-4 text-sm font-bold">
+                  <span className={`rounded-full px-2.5 py-1 text-xs ${u.isActive ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {u.isActive ? 'Active' : 'Disabled'}
+                  </span>
+                </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-1">
                     <button onClick={() => setResetTarget(u)} title="Reset password" className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg">

@@ -141,7 +141,6 @@ export default function MenuTab() {
                 <p className="mt-1 text-xs text-bean/55">{item.category} <span className="px-1">·</span> Rs. {item.price}</p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-bean/65">
                   <DietaryBadge dietaryType={item.dietaryType} />
-                  {item.dietaryType === 'veg' ? 'Vegetarian' : item.dietaryType === 'non_veg' ? 'Non-vegetarian' : 'Diet not set'}
                 </div>
               </div>
             </div>

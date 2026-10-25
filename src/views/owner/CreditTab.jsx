@@ -60,29 +60,34 @@ export default function CreditTab() {
   if (data.error) return <p className="text-red-500 font-bold">Failed to load the ledger.</p>;
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
-        <h2 className="text-3xl font-black text-bean tracking-tight flex items-center gap-3">
-          <NotebookPen className="text-chiya" /> Udhaaro Ledger
-        </h2>
-        <div className="bg-white rounded-2xl px-6 py-3 shadow-sm border border-gray-100">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Outstanding</p>
-          <p className="text-2xl font-black text-amber-600">{formatRs(data.totalOutstanding)}</p>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+            <NotebookPen size={15} /> Customer accounts
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">Udhaaro Ledger</h2>
+          <p className="mt-1 text-sm text-bean/55">Track outstanding balances and record repayments.</p>
+        </div>
+        <div className="rounded-xl bg-amber-50 px-5 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800/60">Total outstanding</p>
+          <p className="mt-0.5 text-2xl font-black text-amber-700">{formatRs(data.totalOutstanding)}</p>
         </div>
       </div>
 
       {!data.customers.length ? (
-        <div className="text-center text-gray-400 py-20 bg-white rounded-3xl border border-gray-100">
-          <NotebookPen size={48} className="mx-auto mb-4" />
-          <p className="font-bold">No credit outstanding — sabai le tireko chha 🎉</p>
+        <div className="rounded-2xl border border-dashed border-espresso/20 bg-white px-6 py-16 text-center">
+          <NotebookPen size={32} className="mx-auto mb-3 text-bean/30" />
+          <p className="font-bold text-bean">No outstanding credit</p>
+          <p className="mt-1 text-sm text-bean/50">Customer balances will appear here when credit is recorded.</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 xl:grid-cols-2">
           {data.customers.map((c) => (
-            <div key={c.phone} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={c.phone} className="overflow-hidden rounded-2xl border border-espresso/10 bg-white shadow-sm">
               <button
                 onClick={() => toggleOpen(c.phone)}
-                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+                className="flex min-h-[76px] w-full items-center justify-between gap-3 px-5 py-4 text-left transition-colors hover:bg-[#fff8f6]"
               >
                 <div>
                   <p className="font-black text-bean">{c.name}</p>
@@ -97,7 +102,7 @@ export default function CreditTab() {
               </button>
 
               {open === c.phone && (
-                <div className="border-t border-gray-100 px-5 py-4 bg-slate-50">
+                <div className="border-t border-espresso/10 bg-[#fff8f6] px-5 py-4">
                   <button
                     onClick={() => { setRepay(c); setAmount(String(Math.max(0, c.balance))); setError(''); }}
                     className="mb-3 flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-xl font-black text-sm transition-colors active:scale-95"

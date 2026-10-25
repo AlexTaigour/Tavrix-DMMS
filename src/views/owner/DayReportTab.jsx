@@ -140,21 +140,26 @@ export default function DayReportTab() {
   const digital = report.collected - cashInDrawer - (report.collectedByMethod.credit || 0);
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-3 print:hidden">
-        <h2 className="text-3xl font-black text-bean tracking-tight flex items-center gap-3">
-          <Sunset className="text-chiya" /> Day Report
-        </h2>
+    <div className="w-full max-w-6xl">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4 print:hidden">
+        <div>
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+            <Sunset size={15} /> Daily close
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">Day Report</h2>
+          <p className="mt-1 text-sm text-bean/55">Reconcile sales, collections, and outstanding tabs before closing.</p>
+        </div>
         <div className="flex items-center gap-2">
           <input
             type="date"
             value={day}
             onChange={(e) => setDay(e.target.value)}
-            className="bg-white p-2.5 rounded-xl shadow-sm text-sm font-bold outline-none border border-gray-100"
+            aria-label="Report date"
+            className="min-h-11 rounded-xl border border-espresso/10 bg-white px-3 py-2 text-sm font-semibold text-bean shadow-sm outline-none focus:border-chiya"
           />
           <button
             onClick={printReport}
-            className="flex items-center gap-2 bg-espresso text-white px-4 py-2.5 rounded-xl font-black text-sm hover:bg-bean transition-colors"
+            className="flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700"
           >
             <Printer size={16} /> {printing ? 'Preparing...' : 'Print'}
           </button>
@@ -162,21 +167,22 @@ export default function DayReportTab() {
       </div>
       {printError && <p className="text-red-500 font-bold text-sm mb-4">{printError}</p>}
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-6">
-        <div className="text-center border-b border-dashed border-gray-200 pb-4">
+      <div className="space-y-6 rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm md:p-7">
+        <div className="border-b border-espresso/10 pb-4">
           <h3 className="font-black text-xl text-bean">{CAFE_NAME} — {day}</h3>
-          <p className="text-xs text-gray-400 font-bold">End of day closing report</p>
+          <p className="mt-1 text-sm text-bean/50">End of day closing report</p>
         </div>
 
-        <div>
+        <div className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+        <section className="rounded-xl bg-[#fff8f6] p-4 md:p-5">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales</p>
           <Row label="Orders completed" value={report.orderCount} />
           <Row label="— of which takeaway" value={report.takeawayCount} />
           <Row label="Cancelled" value={report.cancelledCount} accent="text-red-400" />
           <Row label="Sales value" value={formatRs(report.revenue)} />
-        </div>
+        </section>
 
-        <div>
+        <section className="rounded-xl bg-[#fff8f6] p-4 md:p-5">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Money collected</p>
           {Object.entries(report.collectedByMethod).map(([m, v]) => (
             <Row key={m} label={METHOD_LABELS[m] || m} value={formatRs(v)} />
@@ -188,29 +194,30 @@ export default function DayReportTab() {
             <span className="text-2xl font-black text-chiya">{formatRs(cashInDrawer)}</span>
           </div>
           <p className="text-[11px] text-gray-400 font-bold mt-2 text-right">Digital: {formatRs(digital)}</p>
-        </div>
+        </section>
 
-        <div>
+        <section className="rounded-xl bg-[#fff8f6] p-4 md:p-5">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Udhaaro (credit)</p>
           <Row label="Given today" value={formatRs(report.creditGiven)} accent="text-amber-600" />
           <Row label="Repaid today" value={formatRs(report.creditRepaid)} accent="text-green-600" />
           <Row label="Total outstanding" value={formatRs(report.creditOutstanding)} accent="text-amber-600" />
-        </div>
+        </section>
 
         {report.unpaidTotal > 0 && (
-          <p className="bg-red-50 text-red-600 rounded-2xl px-5 py-4 text-sm font-black">
+          <p className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
             ⚠ {formatRs(report.unpaidTotal)} in unpaid tabs is still open — settle every table before closing.
           </p>
         )}
 
         {report.topItems.length > 0 && (
-          <div>
+          <section className="rounded-xl bg-[#fff8f6] p-4 md:p-5">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Top sellers today</p>
             {report.topItems.map((t, i) => (
               <Row key={t.name} label={`${i + 1}. ${t.name}`} value={`${t.qty} sold · ${formatRs(t.revenue)}`} />
             ))}
-          </div>
+          </section>
         )}
+        </div>
       </div>
     </div>
   );

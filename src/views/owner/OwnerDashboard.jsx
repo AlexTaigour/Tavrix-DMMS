@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {
   Coffee, TrendingUp, Menu as MenuIcon, Users, QrCode, LogOut, ClipboardList,
-  ChefHat, KeyRound, Sunset, NotebookPen, History, Wifi, ChevronRight,
+  ChefHat, KeyRound, Sunset, NotebookPen, History, Wifi, ChevronRight, Loader2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
-import AnalyticsTab from './AnalyticsTab';
-import MenuTab from './MenuTab';
-import UsersTab from './UsersTab';
-import QrTab from './QrTab';
-import OrderGateTab from './OrderGateTab';
-import DayReportTab from './DayReportTab';
-import CreditTab from './CreditTab';
-import OrderHistoryTab from './OrderHistoryTab';
 import { CAFE_NAME, PLATFORM_NAME } from '../../utils/brand';
 
+const AnalyticsTab = lazy(() => import('./AnalyticsTab'));
+const MenuTab = lazy(() => import('./MenuTab'));
+const UsersTab = lazy(() => import('./UsersTab'));
+const QrTab = lazy(() => import('./QrTab'));
+const OrderGateTab = lazy(() => import('./OrderGateTab'));
+const DayReportTab = lazy(() => import('./DayReportTab'));
+const CreditTab = lazy(() => import('./CreditTab'));
+const OrderHistoryTab = lazy(() => import('./OrderHistoryTab'));
+
 const TABS = [
-  { to: '/owner', end: true, icon: TrendingUp, label: 'Analytics' },
+  { to: '/owner', end: true, icon: TrendingUp, label: 'Overview' },
   { to: '/owner/history', icon: History, label: 'History' },
   { to: '/owner/day-report', icon: Sunset, label: 'Day Report' },
   { to: '/owner/credit', icon: NotebookPen, label: 'Udhaaro' },
@@ -103,6 +104,7 @@ export default function OwnerDashboard() {
             Signed in as {user?.displayName || 'Owner'}
           </div>
         </div>
+        <Suspense fallback={<div className="flex min-h-48 items-center justify-center"><Loader2 className="animate-spin text-chiya" size={32} /></div>}>
         <Routes>
           <Route index element={<AnalyticsTab />} />
           <Route path="history" element={<OrderHistoryTab />} />
@@ -114,6 +116,7 @@ export default function OwnerDashboard() {
           <Route path="ordering" element={<OrderGateTab />} />
           <Route path="*" element={<Navigate to="/owner" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       {showChangePw && <ChangePasswordModal onClose={() => setShowChangePw(false)} />}

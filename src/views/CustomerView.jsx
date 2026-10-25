@@ -23,9 +23,8 @@ const saved = (() => {
 
 const lastOrderCode = () => {
   try {
-    const { code, at } = JSON.parse(localStorage.getItem('tvx_last_order') || '{}');
-    // only offer tracking for a recent order (same visit, ~3h)
-    return code && Date.now() - at < 3 * 60 * 60 * 1000 ? code : null;
+    const { code } = JSON.parse(localStorage.getItem('tvx_last_order') || '{}');
+    return typeof code === 'string' && code.trim() ? code.trim() : null;
   } catch {
     return null;
   }
@@ -55,6 +54,8 @@ const CustomerView = () => {
   const [tables, setTables] = useState([]);
   const [cart, setCart] = useState({});
   const [showOrderForm, setShowOrderForm] = useState(false);
+  const [showTrackOrder, setShowTrackOrder] = useState(false);
+  const [trackCode, setTrackCode] = useState('');
   const [detailItemId, setDetailItemId] = useState(null);
   const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
@@ -239,6 +240,23 @@ const CustomerView = () => {
     }
   };
 
+  const openMyOrder = () => {
+    if (trackable) {
+      navigate(`/track/${encodeURIComponent(trackable)}`);
+      return;
+    }
+    setTrackCode('');
+    setShowTrackOrder(true);
+  };
+
+  const submitTrackCode = (e) => {
+    e.preventDefault();
+    const code = trackCode.trim().toUpperCase();
+    if (!code) return;
+    setShowTrackOrder(false);
+    navigate(`/track/${encodeURIComponent(code)}`);
+  };
+
   if (!menu) {
     return <BrewingLoader splash label="Brewing your menu" />;
   }
@@ -262,14 +280,12 @@ const CustomerView = () => {
               <p className="mt-1 truncate text-xs text-bean/60 sm:text-sm">Ek Cup Chiya, Dherai Kura</p>
             </div>
           </div>
-          {trackable && (
-            <button
-              onClick={() => navigate(`/track/${trackable}`)}
-              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-espresso/15 bg-white px-3 text-xs font-bold text-bean shadow-sm transition hover:border-chiya hover:text-chiya sm:px-4 sm:text-sm"
-            >
-              <Receipt size={15} /> My order
-            </button>
-          )}
+          <button
+            onClick={openMyOrder}
+            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-espresso/15 bg-white px-3 text-xs font-bold text-bean shadow-sm transition hover:border-chiya hover:text-chiya sm:px-4 sm:text-sm"
+          >
+            <Receipt size={15} /> My order
+          </button>
         </div>
 
         <div className="relative mt-5 min-h-[220px] overflow-hidden rounded-[28px] bg-[#a51f29] text-white shadow-lg sm:min-h-[300px] lg:min-h-[340px]">
@@ -707,6 +723,55 @@ const CustomerView = () => {
                     <span className="flex items-center justify-center gap-1.5">
                       <Wifi size={14} /> Connect to the café Wi-Fi to place this order
                     </span>
+                  )}
+
+                  {showTrackOrder && (
+                    <div
+                      className="fixed inset-0 z-[60] flex items-end justify-center bg-bean/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+                      onClick={() => setShowTrackOrder(false)}
+                    >
+                      <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="track-order-title"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-md rounded-t-3xl border border-espresso/10 bg-white p-5 shadow-2xl sm:rounded-3xl sm:p-6"
+                      >
+                        <div className="mb-4 flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-chiya">Order tracking</p>
+                            <h2 id="track-order-title" className="mt-1 text-xl font-black text-bean">Find your order</h2>
+                            <p className="mt-1 text-sm text-bean/55">Enter the order code from your confirmation to view its details and live status.</p>
+                          </div>
+                          <button
+                            onClick={() => setShowTrackOrder(false)}
+                            aria-label="Close order tracking"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cream text-bean/60 hover:text-chiya"
+                          >
+                            <X size={17} />
+                          </button>
+                        </div>
+                        <form onSubmit={submitTrackCode} className="space-y-3">
+                          <label htmlFor="track-order-code" className="text-xs font-bold text-bean/60">Order code</label>
+                          <input
+                            id="track-order-code"
+                            autoFocus
+                            required
+                            minLength={3}
+                            maxLength={32}
+                            pattern="[A-Za-z0-9-]+"
+                            title="Enter the order code shown on your confirmation"
+                            value={trackCode}
+                            onChange={(e) => setTrackCode(e.target.value)}
+                            placeholder="e.g. TVX-ABC123"
+                            className="min-h-12 w-full rounded-xl border border-espresso/15 bg-[#fff8f6] px-4 font-mono text-sm font-bold uppercase tracking-wide text-bean outline-none focus:border-chiya focus:ring-2 focus:ring-chiya/15"
+                          />
+                          <button type="submit" className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-chiya px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700">
+                            Track order <ArrowRight size={16} />
+                          </button>
+                        </form>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

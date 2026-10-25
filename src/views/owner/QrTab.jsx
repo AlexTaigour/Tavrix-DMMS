@@ -34,11 +34,13 @@ function TableQr({ url, table }) {
     }
   }, [url]);
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center">
-      <p className="handwritten text-xl font-bold text-espresso mb-1">{CAFE_NAME}</p>
-      <canvas ref={canvasRef} className="mx-auto" />
-      <p className="font-black text-2xl text-bean mt-2">Table {table}</p>
-      <p className="text-[10px] text-gray-400 font-bold">Scan to order ☕</p>
+    <div className="rounded-2xl border border-espresso/10 bg-white p-5 text-center shadow-sm transition-shadow hover:shadow-md">
+      <p className="handwritten mb-1 text-xl font-bold text-espresso">{CAFE_NAME}</p>
+      <div className="mx-auto flex min-h-[190px] items-center justify-center rounded-xl bg-[#fff8f6]">
+        <canvas ref={canvasRef} className="mx-auto max-w-full" />
+      </div>
+      <p className="mt-3 text-xl font-black text-bean">Table {table}</p>
+      <p className="mt-1 text-xs font-medium text-bean/50">Scan to order</p>
     </div>
   );
 }
@@ -160,18 +162,21 @@ export default function QrTab() {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between items-center mb-6 gap-3">
-        <div>
-          <h2 className="text-3xl font-black text-bean tracking-tight">Table QR Codes</h2>
-          <p className="text-sm text-gray-500 font-medium mt-1">
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm">
+        <div className="min-w-0">
+          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+            <Printer size={15} /> Table setup
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">Table QR Codes</h2>
+          <p className="mt-1 text-sm text-bean/55">
             Codes point to <span className="font-mono font-bold break-all">{base || '—'}</span>
           </p>
         </div>
         <button
           onClick={printAll}
           disabled={printing || !tables.length}
-          className="bg-espresso text-white px-6 py-3 rounded-2xl font-black flex items-center gap-2 disabled:opacity-50"
+          className="flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-5 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
         >
           {printing ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
           Print All
@@ -191,7 +196,7 @@ export default function QrTab() {
 
       {error && <p className="text-red-500 text-sm font-bold mb-4">{error}</p>}
 
-      <div className="grid grid-cols-3 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {tables.map((t) => (
           <TableQr key={t} table={t} url={tableUrl(base, t)} />
         ))}

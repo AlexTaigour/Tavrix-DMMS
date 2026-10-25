@@ -199,18 +199,21 @@ export default function OrderGateTab() {
   );
 
   return (
-    <div className="max-w-3xl">
+    <div className="w-full max-w-5xl space-y-5">
       <div className="mb-6">
-        <h2 className="text-3xl font-black text-bean tracking-tight">In-Café Ordering</h2>
-        <p className="text-sm text-gray-500 font-medium mt-1">
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-chiya">
+          <ShieldCheck size={15} /> Order access
+        </div>
+        <h2 className="text-2xl font-black tracking-tight text-bean sm:text-3xl">In-Café Ordering</h2>
+        <p className="mt-1 text-sm text-bean/55">
           Only let people <span className="font-bold">inside the café</span> place orders from the website.
         </p>
       </div>
 
       {/* Overall status */}
       <div
-        className={`rounded-3xl p-6 border shadow-sm mb-5 flex items-center gap-4 ${
-          anyActive ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'
+        className={`flex items-center gap-4 rounded-2xl border p-5 shadow-sm ${
+          anyActive ? 'bg-green-50 border-green-200' : 'bg-white border-espresso/10'
         }`}
       >
         <div className={`p-3 rounded-2xl ${anyActive ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -227,7 +230,7 @@ export default function OrderGateTab() {
       </div>
 
       {/* ---- Layer 1: Café Wi-Fi (IP) ---- */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm mb-5">
+      <div className="rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm md:p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl ${ipActive ? 'bg-espresso text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -363,7 +366,7 @@ export default function OrderGateTab() {
       </div>
 
       {/* ---- Layer 2: GPS location ---- */}
-      <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm mb-5">
+      <div className="rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm md:p-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl ${geoActive ? 'bg-espresso text-white' : 'bg-gray-100 text-gray-400'}`}>
@@ -430,7 +433,7 @@ export default function OrderGateTab() {
 
       {/* ---- Combine mode (only when both layers do something) ---- */}
       {bothActive && (
-        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm mb-5">
+        <div className="rounded-2xl border border-espresso/10 bg-white p-5 shadow-sm md:p-6">
           <h3 className="font-black text-espresso mb-1">When both checks are on…</h3>
           <p className="text-xs font-bold text-gray-400 mb-4">How should a customer prove they're at the café?</p>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -467,7 +470,7 @@ export default function OrderGateTab() {
       {error && <p className="text-red-500 text-sm font-bold mb-4">{error}</p>}
 
       {/* How it works / caveats */}
-      <div className="flex items-start gap-3 text-xs font-bold text-gray-500 bg-gray-50 rounded-2xl p-4">
+      <div className="flex items-start gap-3 rounded-2xl border border-espresso/10 bg-white p-4 text-xs font-medium text-bean/60">
         <AlertTriangle size={18} className="shrink-0 mt-0.5 text-gray-400" />
         <div className="space-y-1">
           <p>
