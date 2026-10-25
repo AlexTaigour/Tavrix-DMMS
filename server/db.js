@@ -59,11 +59,17 @@ export async function checkSchema() {
       ['orders.order_type', supabase.from('orders').select('order_type').limit(1)],
       ['menu_items.description', supabase.from('menu_items').select('description').limit(1)],
       ['menu_items.cook_minutes', supabase.from('menu_items').select('cook_minutes').limit(1)],
+      ['menu_items.dietary_type', supabase.from('menu_items').select('dietary_type').limit(1)],
     ];
     for (const [what, probe] of probes) {
       const { error: pErr } = await probe;
       if (pErr && (pErr.code === '42P01' || pErr.code === '42703' || /find the table|does not exist|column/i.test(pErr.message))) {
         console.error(`❌ The database is missing "${what}" (added in a newer version).`);
+        if (what === 'menu_items.dietary_type') {
+          console.error('   Open Supabase Dashboard → SQL Editor, run server/menu-dietary-type.sql,');
+          console.error('   then start this server again.');
+          process.exit(1);
+        }
         console.error('   Open Supabase Dashboard → SQL Editor, paste the current');
         console.error('   contents of supabase-schema.sql and click Run (safe to re-run).');
         console.error('   Then start this server again.');

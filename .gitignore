@@ -10,6 +10,7 @@ dist/
 .env.*
 !.env.example
 *.sql
+!server/menu-dietary-type.sql
 tests/
 
 # generated JWT secret + any local SQLite leftovers from the pre-Supabase era

@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, X, Utensils, ClipboardList, CheckCircle2, Search, Plus, Minus, Trash2, Receipt, Wifi, Navigation } from 'lucide-react';
+import { ShoppingCart, X, Utensils, ClipboardList, CheckCircle2, Search, Plus, Minus, Trash2, Receipt, Wifi, Navigation, ArrowRight, Clock3, Flame, MapPin } from 'lucide-react';
 import { fetchMenu, fetchTables, placeOrder, fetchOrderGateStatus } from '../api/client';
 import { getSocket } from '../api/socket';
 import { MenuCard } from '../components/MenuCard';
 import ItemDetailModal from '../components/ItemDetailModal';
-import { SteamAnimation } from '../components/SteamAnimation';
 import BrewingLoader from '../components/BrewingLoader';
-import BlurText from '../components/reactbits/BlurText';
 import AnimatedList from '../components/reactbits/AnimatedList';
 import ClickSpark from '../components/reactbits/ClickSpark';
 import ShinyButton from '../components/reactbits/ShinyButton';
 import CountUp from '../components/reactbits/CountUp';
-import { CAFE_NAME, PLATFORM_NAME, CAFE_LOGO } from '../utils/brand';
+import { CAFE_NAME, CAFE_LOGO } from '../utils/brand';
 
 // Returning customers skip retyping their details.
 const saved = (() => {
@@ -152,6 +150,16 @@ const CustomerView = () => {
     if (q) list = list.filter((i) => i.name.toLowerCase().includes(q));
     return list;
   }, [activeCategory, menu, search]);
+  const menuSections = useMemo(() => {
+    if (!menu) return [];
+    const sectionCategories = activeCategory === 'All' ? categories.slice(1) : [activeCategory];
+    return sectionCategories
+      .map((category) => ({
+        category,
+        items: filteredMenu.filter((item) => item.category === category),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [activeCategory, categories, filteredMenu, menu]);
   const cartItems = useMemo(() => {
     if (!menu) return [];
     return Object.entries(cart).map(([id, qty]) => {
@@ -235,130 +243,135 @@ const CustomerView = () => {
     return <BrewingLoader splash label="Brewing your menu" />;
   }
 
+  const featuredItem = menu.find((item) => item.image && item.isAvailable !== false) || menu.find((item) => item.image);
+
   return (
-    <div className="max-w-6xl mx-auto min-h-screen pb-28">
-      <header className="relative overflow-hidden bg-gradient-to-b from-espresso to-bean text-white p-10 pb-12 rounded-b-[3rem] text-center shadow-xl">
-        {/* layered warm ambiance */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_-10%,rgba(217,179,130,0.40),transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.06] bg-[url('https://www.transparenttextures.com/patterns/natural-paper.png')]" />
-
-        {/* coffee beans drifting quietly in the background */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden text-latte">
-          {[
-            { left: '8%', top: '20%', size: 30, r: -18, dur: '9s', delay: '0s', op: 0.16 },
-            { left: '85%', top: '14%', size: 42, r: 24, dur: '11s', delay: '1.2s', op: 0.13 },
-            { left: '73%', top: '56%', size: 26, r: -8, dur: '8s', delay: '0.6s', op: 0.11 },
-            { left: '14%', top: '60%', size: 34, r: 14, dur: '12s', delay: '2s', op: 0.13 },
-            { left: '45%', top: '80%', size: 22, r: 32, dur: '10s', delay: '0.3s', op: 0.10 },
-          ].map((b, i) => (
-            <span
-              key={i}
-              className="animate-bean-float absolute block"
-              style={{ left: b.left, top: b.top, width: b.size, height: b.size * 1.4, opacity: b.op, '--r': `${b.r}deg`, '--dur': b.dur, animationDelay: b.delay }}
-            >
-              <svg viewBox="0 0 40 56" fill="none" className="h-full w-full">
-                <path d="M20 2C29 2 36 13 36 28S29 54 20 54 4 43 4 28 11 2 20 2Z" fill="currentColor" />
-                <path d="M20 5C15 12 15 44 20 51" stroke="rgba(0,0,0,0.22)" strokeWidth="2.4" strokeLinecap="round" />
-              </svg>
-            </span>
-          ))}
-        </div>
-
-        {/* occasional warm light sweep */}
-        <div className="animate-gleam pointer-events-none absolute top-0 left-[-33%] h-full w-1/3 bg-gradient-to-r from-transparent via-white/12 to-transparent" />
-
-        {trackable && (
-          <button
-            onClick={() => navigate(`/track/${trackable}`)}
-            className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-white/15 hover:bg-white/25 transition-colors px-3 py-1.5 rounded-full text-xs font-bold"
-          >
-            <Receipt size={14} /> My order
-          </button>
-        )}
-        <div className="relative z-10">
-          <div className="relative mb-1 mt-10 inline-block">
-            {/* glowing halo behind the logo */}
-            <div className="pointer-events-none absolute inset-0 -m-6 rounded-full bg-[radial-gradient(circle,rgba(199,107,42,0.55),transparent_70%)] blur-xl animate-halo" />
-            <SteamAnimation />
+    <div className="max-w-[1440px] mx-auto min-h-screen px-4 sm:px-6 pb-28 lg:pb-12">
+      <header className="pt-4 sm:pt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
             <img
               src={CAFE_LOGO}
-              alt="Logo"
+              alt=""
               fetchPriority="high"
               decoding="async"
-              className="relative w-30 h-auto drop-shadow-[0_6px_16px_rgba(0,0,0,0.35)]"
+              className="h-12 w-12 shrink-0 rounded-full border border-espresso/10 bg-white object-contain p-1 shadow-sm sm:h-14 sm:w-14"
             />
+            <div className="min-w-0">
+              <p className="truncate font-bold leading-tight text-bean sm:text-lg">{CAFE_NAME}</p>
+              <p className="mt-1 truncate text-xs text-bean/60 sm:text-sm">Ek Cup Chiya, Dherai Kura</p>
+            </div>
           </div>
-          <BlurText
-            as="h1"
-            text={CAFE_NAME}
-            className="hero-wordmark text-4xl md:text-6xl font-bold handwritten block"
-          />
-          {/* hand-drawn underline swash */}
-          <svg viewBox="0 0 200 18" fill="none" className="mx-auto mt-1 h-3.5 w-40 md:w-56" aria-hidden="true">
-            <path className="swash-path" d="M6 11C46 3 150 3 194 9" strokeWidth="4" strokeLinecap="round" />
-          </svg>
-          <p className="text-sm opacity-85 italic mt-2.5 mb-3">Ek Cup Chiya, Dherai Kura</p>
-          <p className="inline-flex items-center gap-1.5 text-[10px] opacity-60 tracking-wide">
-            <span className="h-px w-4 bg-white/40" /> Powered by {PLATFORM_NAME}™ <span className="h-px w-4 bg-white/40" />
-          </p>
-          {formData.table && (
-            <p className="mt-3 inline-block bg-chiya px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest">
-              Table {formData.table}
+          {trackable && (
+            <button
+              onClick={() => navigate(`/track/${trackable}`)}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border border-espresso/15 bg-white px-3 text-xs font-bold text-bean shadow-sm transition hover:border-chiya hover:text-chiya sm:px-4 sm:text-sm"
+            >
+              <Receipt size={15} /> My order
+            </button>
+          )}
+        </div>
+
+        <div className="relative mt-5 min-h-[220px] overflow-hidden rounded-[28px] bg-[#a51f29] text-white shadow-lg sm:min-h-[300px] lg:min-h-[340px]">
+          {featuredItem && (
+            <img
+              src={featuredItem.image}
+              alt=""
+              fetchPriority="high"
+              decoding="async"
+              className="absolute inset-y-0 right-0 h-full w-full object-cover object-center opacity-45 sm:w-[68%] sm:opacity-100"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#8f1d27] via-[#8f1d27]/90 to-[#8f1d27]/15 sm:via-[#8f1d27]/80" />
+          <div className="relative z-10 flex min-h-[220px] max-w-2xl flex-col items-start justify-center p-5 sm:min-h-[300px] sm:p-10 lg:min-h-[340px] lg:p-14">
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
+              <Flame size={14} /> Fresh from our kitchen
             </p>
+            <h1 className="max-w-xl font-serif text-2xl font-bold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+              A little taste<br className="hidden sm:block" /> of Nepal.
+            </h1>
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-white/85 sm:mt-4 sm:text-base">
+              Comforting chiya, local favourites, and warm hospitality — made fresh for you.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-6">
+              <a
+                href="#menu"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-bold text-espresso shadow-md transition hover:bg-cream"
+              >
+                Explore the menu <ArrowRight size={16} />
+              </a>
+              {formData.table && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/15 px-4 py-3 text-sm font-semibold">
+                  <MapPin size={15} /> Table {formData.table}
+                </span>
+              )}
+            </div>
+          </div>
+          {!featuredItem && (
+            <div className="pointer-events-none absolute -right-8 -top-10 h-64 w-64 rounded-full border-[36px] border-white/5 sm:right-12 sm:top-10" />
           )}
         </div>
       </header>
 
-      <nav className="sticky top-4 z-40 px-4 -mt-8 space-y-2">
-        <div className="max-w-2xl mx-auto flex gap-3 overflow-x-auto scrollbar-hide bg-white/80 backdrop-blur-lg p-2 rounded-full shadow-lg border border-white/50">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-6 py-2 rounded-full font-bold text-sm transition-all ${
-                activeCategory === cat ? 'bg-chiya text-white' : 'text-espresso hover:bg-cream'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-        <div className="max-w-2xl mx-auto relative">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-espresso/40 pointer-events-none" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search chiya, snacks…"
-            className="w-full bg-white/80 backdrop-blur-lg border border-white/50 shadow rounded-full py-2.5 pl-10 pr-10 text-sm font-medium outline-none focus:ring-2 focus:ring-chiya/40"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-espresso/50 hover:bg-cream"
-            >
-              <X size={14} />
-            </button>
-          )}
+      <nav id="menu" className="sticky top-0 z-40 -mx-4 mt-5 border-b border-espresso/10 bg-[#fff8f6]/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                aria-pressed={activeCategory === cat}
+                className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-chiya text-white shadow-sm'
+                    : 'border border-espresso/10 bg-white text-bean/75 hover:border-chiya/40 hover:text-chiya'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:max-w-xs">
+            <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-bean/45" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Find something delicious"
+              aria-label="Search the menu"
+              className="w-full rounded-full border border-espresso/10 bg-white py-3 pl-10 pr-10 text-sm font-medium text-bean outline-none transition focus:border-chiya focus:ring-2 focus:ring-chiya/15"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-bean/55 hover:bg-cream"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </nav>
 
+      <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <main>
       {!canOrder && (
-        <div className="mx-4 mt-4 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-start gap-3">
-          <div className="bg-amber-400 text-white p-2 rounded-xl shrink-0">
+        <div className="mb-6 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 sm:p-4">
+          <div className="shrink-0 rounded-xl bg-chiya p-2 text-white">
             {gate.needLocation ? <Navigation size={20} /> : <Wifi size={20} />}
           </div>
           <div className="min-w-0">
             {gate.needLocation ? (
               <>
-                <p className="font-black text-amber-800">Confirm you're at the café</p>
-                <p className="text-sm font-bold text-amber-700 mt-0.5">
+                <p className="font-black text-rose-900">Confirm you're at the café</p>
+                <p className="mt-0.5 text-sm font-medium text-rose-800">
                   Share your location so we know you're here, then you can order. ☕
                 </p>
                 <button
                   onClick={confirmLocation}
                   disabled={locating}
-                  className="mt-2.5 bg-espresso text-white px-4 py-2 rounded-xl font-black text-sm inline-flex items-center gap-2 disabled:opacity-60 active:scale-95 transition-all"
+                  className="mt-2.5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-4 text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-60"
                 >
                   {locating ? 'Checking…' : <><Navigation size={15} /> I'm at the café</>}
                 </button>
@@ -366,16 +379,16 @@ const CustomerView = () => {
               </>
             ) : gate.tooFar ? (
               <>
-                <p className="font-black text-amber-800">You seem too far from the café</p>
-                <p className="text-sm font-bold text-amber-700 mt-0.5">
+                <p className="font-black text-rose-900">You seem too far from the café</p>
+                <p className="mt-0.5 text-sm font-medium text-rose-800">
                   {gate.distance != null ? `You're about ${gate.distance} m away. ` : ''}
                   Please order from inside the café. You can still browse the menu below.
                 </p>
               </>
             ) : (
               <>
-                <p className="font-black text-amber-800">Ordering is for café guests</p>
-                <p className="text-sm font-bold text-amber-700 mt-0.5">
+                <p className="font-black text-rose-900">Ordering is for café guests</p>
+                <p className="mt-0.5 text-sm font-medium text-rose-800">
                   Please connect to the café Wi-Fi to place an order. You can still browse the menu below. ☕
                 </p>
               </>
@@ -385,29 +398,121 @@ const CustomerView = () => {
       )}
 
       <ClickSpark>
-        <AnimatedList
-          items={filteredMenu}
-          keyOf={(item) => item.id}
-          className="p-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          renderItem={(item) => (
-            <MenuCard
-              item={item}
-              quantity={cart[item.id] || 0}
-              onUpdateQuantity={updateQty}
-              onOpenDetail={setDetailItemId}
-            />
-          )}
-        />
+        <div className="space-y-9">
+          {menuSections.map((section) => (
+            <section key={section.category} aria-labelledby={`category-${section.category.replace(/\W+/g, '-').toLowerCase()}`}>
+              <div className="mb-4 flex items-end justify-between gap-3">
+                <div>
+                  <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-chiya">Made with care</p>
+                  <h2
+                    id={`category-${section.category.replace(/\W+/g, '-').toLowerCase()}`}
+                    className="font-serif text-2xl font-bold text-bean sm:text-3xl"
+                  >
+                    {section.category}
+                  </h2>
+                </div>
+                <span className="shrink-0 pb-1 text-xs font-medium text-bean/50">
+                  {section.items.length} {section.items.length === 1 ? 'item' : 'items'}
+                </span>
+              </div>
+              <AnimatedList
+                items={section.items}
+                keyOf={(item) => item.id}
+                className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
+                renderItem={(item) => (
+                  <MenuCard
+                    item={item}
+                    quantity={cart[item.id] || 0}
+                    onUpdateQuantity={updateQty}
+                    onOpenDetail={setDetailItemId}
+                  />
+                )}
+              />
+            </section>
+          ))}
+        </div>
         {!filteredMenu.length && (
-          <div className="text-center text-gray-400 py-20">
-            <Utensils size={48} className="mx-auto mb-4" />
-            {search ? `Nothing matches “${search}”` : 'Coming Soon'}
+          <div className="rounded-3xl border border-dashed border-espresso/20 bg-white/70 py-16 text-center text-bean/55">
+            <Utensils size={38} className="mx-auto mb-4 text-chiya/60" />
+            <p className="font-semibold text-bean">{search ? `Nothing matches “${search}”` : 'The menu is getting ready'}</p>
+            {search && (
+              <button onClick={() => setSearch('')} className="mt-3 text-sm font-bold text-chiya hover:underline">
+                Clear search
+              </button>
+            )}
           </div>
         )}
       </ClickSpark>
+        </main>
+
+        <aside className="sticky top-24 hidden lg:block">
+          <div className="overflow-hidden rounded-3xl border border-espresso/10 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-espresso/10 px-5 py-4">
+              <h2 className="flex items-center gap-2 font-bold text-bean">
+                <ShoppingCart size={18} className="text-chiya" /> Your order
+              </h2>
+              <span className="rounded-full bg-cream px-2.5 py-1 text-xs font-bold text-espresso">{itemCount}</span>
+            </div>
+            {cartItems.length ? (
+              <>
+                <div className="max-h-[42vh] space-y-4 overflow-y-auto px-5 py-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-bean">{item.name}</p>
+                        <p className="mt-1 text-xs text-bean/55">Rs. {item.price} each</p>
+                      </div>
+                      <div className="flex items-center gap-1 rounded-full border border-espresso/10 bg-cream/70 p-1">
+                        <button onClick={() => updateQty(item.id, -1)} aria-label={`Remove one ${item.name}`} className="flex h-11 w-11 items-center justify-center rounded-full text-espresso hover:bg-white">
+                          <Minus size={14} />
+                        </button>
+                        <span className="min-w-4 text-center text-xs font-bold">{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, 1)} aria-label={`Add one ${item.name}`} className="flex h-11 w-11 items-center justify-center rounded-full text-espresso hover:bg-white">
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <span className="w-16 text-right text-xs font-bold text-bean">Rs. {item.qty * item.price}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-dashed border-espresso/15 px-5 py-4">
+                  <div className="flex justify-between text-sm text-bean/60">
+                    <span>Subtotal</span><span>Rs. {total}</span>
+                  </div>
+                  <div className="mt-3 flex justify-between font-bold text-bean">
+                    <span>Total</span><span>Rs. {total}</span>
+                  </div>
+                  <button
+                    onClick={() => setShowOrderForm(true)}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-chiya px-4 py-3 text-sm font-bold text-white transition hover:bg-espresso"
+                  >
+                    Continue to checkout <ArrowRight size={16} />
+                  </button>
+                  {formData.table && (
+                    <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-bean/55">
+                      <MapPin size={13} /> Order will be served at table {formData.table}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="px-5 py-7 text-center">
+                <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-cream text-chiya">
+                  <ShoppingCart size={19} />
+                </div>
+                <p className="text-sm font-semibold text-bean">Your order is waiting</p>
+                <p className="mt-1 text-xs leading-relaxed text-bean/55">Add something you love and it will show up here.</p>
+              </div>
+            )}
+            <div className="flex items-center justify-center gap-1.5 border-t border-espresso/10 bg-cream/60 px-4 py-3 text-[11px] text-bean/60">
+              <Clock3 size={13} /> Freshly prepared when you order
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {cartItems.length > 0 && !showOrderForm && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md">
+        <div className="fixed bottom-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 lg:hidden">
           <ShinyButton
             onClick={() => setShowOrderForm(true)}
             className="w-full bg-chiya text-white p-4 rounded-2xl shadow-xl font-black"
@@ -445,7 +550,7 @@ const CustomerView = () => {
               <h2 className="text-2xl font-black handwritten text-espresso flex items-center gap-2">
                 <ClipboardList size={24} /> Your Order
               </h2>
-              <button onClick={() => setShowOrderForm(false)} className="p-2 bg-gray-100 rounded-full">
+              <button onClick={() => setShowOrderForm(false)} aria-label="Close your order" className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
                 <X size={20} />
               </button>
             </div>
@@ -462,7 +567,7 @@ const CustomerView = () => {
                     <button
                       type="button"
                       onClick={() => updateQty(it.id, -1)}
-                      className="p-1.5 text-espresso active:scale-90"
+                      className="flex h-11 w-11 items-center justify-center text-espresso active:scale-90"
                     >
                       <Minus size={14} />
                     </button>
@@ -470,7 +575,7 @@ const CustomerView = () => {
                     <button
                       type="button"
                       onClick={() => updateQty(it.id, 1)}
-                      className="p-1.5 text-espresso active:scale-90"
+                      className="flex h-11 w-11 items-center justify-center text-espresso active:scale-90"
                     >
                       <Plus size={14} />
                     </button>
@@ -479,7 +584,7 @@ const CustomerView = () => {
                   <button
                     type="button"
                     onClick={() => removeItem(it.id)}
-                    className="p-1.5 text-red-400 hover:text-red-600 active:scale-90"
+                    className="flex h-11 w-11 items-center justify-center text-red-400 hover:text-red-600 active:scale-90"
                     aria-label={`Remove ${it.name}`}
                   >
                     <Trash2 size={15} />
@@ -498,6 +603,7 @@ const CustomerView = () => {
                 placeholder="Name"
                 maxLength={80}
                 autoComplete="name"
+                aria-label="Your name"
                 className="w-full p-3 rounded-xl border-2 border-gray-100 bg-gray-50 focus:bg-white focus:border-chiya outline-none transition-all font-medium"
                 value={formData.name}
                 onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
@@ -511,6 +617,7 @@ const CustomerView = () => {
                 autoComplete="tel"
                 pattern="[0-9+\-\s]{4,20}"
                 title="Digits, +, - and spaces only"
+                aria-label="Your phone number"
                 className="w-full p-3 rounded-xl border-2 border-gray-100 bg-gray-50 focus:bg-white focus:border-chiya outline-none transition-all font-medium"
                 value={formData.phone}
                 onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
@@ -521,7 +628,7 @@ const CustomerView = () => {
                 <button
                   type="button"
                   onClick={() => { setFormData((p) => ({ ...p, orderType: 'dine' })); setError(''); }}
-                  className={`py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                  className={`min-h-11 rounded-xl font-bold text-sm transition-all active:scale-95 ${
                     formData.orderType === 'dine'
                       ? 'bg-espresso text-white shadow-md'
                       : 'border-2 border-gray-100 hover:border-espresso/40'
@@ -532,7 +639,7 @@ const CustomerView = () => {
                 <button
                   type="button"
                   onClick={() => { setFormData((p) => ({ ...p, orderType: 'takeaway' })); setError(''); }}
-                  className={`py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 ${
+                  className={`min-h-11 rounded-xl font-bold text-sm transition-all active:scale-95 ${
                     formData.orderType === 'takeaway'
                       ? 'bg-espresso text-white shadow-md'
                       : 'border-2 border-gray-100 hover:border-espresso/40'
@@ -557,7 +664,7 @@ const CustomerView = () => {
                       key={t}
                       type="button"
                       onClick={() => { setFormData((p) => ({ ...p, table: t })); setError(''); }}
-                      className={`py-2.5 rounded-lg font-bold transition-all active:scale-95 ${
+                      className={`min-h-11 rounded-lg font-bold transition-all active:scale-95 ${
                         formData.table === t
                           ? 'bg-chiya text-white shadow-md'
                           : 'border-2 border-gray-100 hover:border-chiya/40'

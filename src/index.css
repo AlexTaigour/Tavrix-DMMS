@@ -3,18 +3,19 @@
 @theme {
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-handwritten: "Lobster", Pacifico;
-  --color-cream: #fff6e5;
-  --color-latte: #d9b382;
-  --color-chiya: #c76b2a;
-  --color-espresso: #6f4e37;
-  --color-bean: #4a3728;
+  --color-cream: #fff8f6;
+  --color-latte: #f2d4d0;
+  --color-chiya: #c62832;
+  --color-espresso: #8f1d27;
+  --color-bean: #292323;
 }
 
 body {
   font-family: var(--font-sans);
   background-color: var(--color-cream);
   color: var(--color-bean);
-  background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+  background-image: radial-gradient(#c6283208 0.7px, transparent 0.7px);
+  background-size: 9px 9px;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -31,8 +32,8 @@ button {
 }
 
 body::selection {
-  background-color: var(--color-latte);
-  color: #fffcf6;
+  background-color: var(--color-chiya);
+  color: #ffffff;
 }
 
 .handwritten {

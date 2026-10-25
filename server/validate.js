@@ -13,6 +13,7 @@ export const menuItemSchema = z.object({
   description: z.string().trim().max(500).default(''),
   cookMinutes: z.number().int().min(1).max(240).nullable().default(null),
   isAvailable: z.boolean().default(true),
+  dietaryType: z.enum(['veg', 'non_veg', 'unspecified']).default('unspecified'),
 });
 
 export const createOrderSchema = z

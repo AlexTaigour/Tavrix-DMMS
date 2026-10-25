@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { Routes, Route, NavLink, Navigate, useNavigate } from 'react-router-dom';
-import { Coffee, TrendingUp, Menu as MenuIcon, Users, QrCode, LogOut, ClipboardList, ChefHat, KeyRound, Sunset, NotebookPen, History, Wifi } from 'lucide-react';
+import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Coffee, TrendingUp, Menu as MenuIcon, Users, QrCode, LogOut, ClipboardList,
+  ChefHat, KeyRound, Sunset, NotebookPen, History, Wifi, ChevronRight,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import ChangePasswordModal from '../../components/ChangePasswordModal';
 import AnalyticsTab from './AnalyticsTab';
@@ -27,56 +30,79 @@ const TABS = [
 export default function OwnerDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showChangePw, setShowChangePw] = useState(false);
+  const activeTab = TABS.find((tab) => (
+    tab.end ? location.pathname === tab.to : location.pathname.startsWith(tab.to)
+  )) || TABS[0];
 
   const linkClass = ({ isActive }) =>
-    `w-full text-left px-5 py-4 rounded-2xl transition-all flex items-center gap-4 ${
-      isActive ? 'bg-chiya text-white shadow-xl' : 'hover:bg-white/5 opacity-70 hover:opacity-100'
+    `flex shrink-0 items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition-colors md:w-full md:px-4 ${
+      isActive
+        ? 'bg-chiya text-white shadow-sm'
+        : 'text-bean/70 hover:bg-cream hover:text-espresso'
     }`;
 
-  const utilClass =
-    'flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-bold opacity-70 hover:opacity-100 hover:bg-white/5 whitespace-nowrap transition-all';
+  const utilityClass =
+    'flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-bean/70 transition-colors hover:bg-cream hover:text-espresso md:w-full md:px-4 md:text-sm';
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
-      <aside className="bg-bean text-cream md:w-72 md:fixed md:inset-y-0 md:left-0 p-5 md:p-8 flex md:flex-col gap-4 md:gap-0 overflow-x-auto">
-        <div className="hidden md:flex items-center gap-4 mb-12">
-          <div className="bg-chiya p-3 rounded-2xl shadow-lg">
-            <Coffee size={24} />
+    <div className="min-h-screen bg-[#fff8f6] text-bean md:flex">
+      <aside className="sticky top-0 z-40 border-b border-espresso/10 bg-white md:fixed md:inset-y-0 md:left-0 md:flex md:w-64 md:flex-col md:border-b-0 md:border-r">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 md:px-5 md:py-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-chiya text-white shadow-sm">
+              <Coffee size={20} />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-tight text-bean md:text-base">{CAFE_NAME}</p>
+              <p className="mt-1 truncate text-[10px] font-medium text-bean/50">{user?.displayName} · Owner</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold handwritten tracking-wider">{CAFE_NAME}</h1>
-            <p className="text-[10px] uppercase font-black opacity-50 tracking-widest">{user?.displayName}</p>
-            <p className="text-[9px] opacity-50 mt-1">Powered by {PLATFORM_NAME}™</p>
-          </div>
+          <span className="hidden rounded-full bg-cream px-2.5 py-1 text-[10px] font-bold text-espresso md:block">ADMIN</span>
         </div>
 
-        <nav className="flex md:flex-col md:flex-grow gap-2 md:gap-3 md:space-y-0">
+        <nav aria-label="Owner sections" className="scrollbar-hide flex gap-1 overflow-x-auto border-t border-espresso/5 px-3 py-2 md:flex-col md:gap-1 md:overflow-y-auto md:border-0 md:px-3 md:py-2">
+          <p className="hidden px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-bean/35 md:block">Workspace</p>
           {TABS.map((tab) => (
             <NavLink key={tab.to} to={tab.to} end={tab.end} className={linkClass}>
-              <tab.icon size={20} className="shrink-0" />
-              <span className="font-bold whitespace-nowrap">{tab.label}</span>
+              <tab.icon size={18} className="shrink-0" />
+              <span className="whitespace-nowrap">{tab.label}</span>
             </NavLink>
           ))}
         </nav>
 
-        <div className="md:mt-auto md:pt-8 md:space-y-3 md:border-t md:border-white/5 flex md:flex-col gap-2 md:gap-0">
-          <button onClick={() => navigate('/staff')} className={utilClass}>
-            <ClipboardList size={18} /> Counter
+        <div className="scrollbar-hide flex gap-1 overflow-x-auto border-t border-espresso/10 bg-cream/50 px-3 py-2 md:mt-auto md:flex-col md:gap-1 md:overflow-visible md:bg-white md:px-3 md:py-4">
+          <button onClick={() => navigate('/staff')} className={utilityClass}>
+            <ClipboardList size={17} /> Counter
           </button>
-          <button onClick={() => navigate('/kitchen')} className={utilClass}>
-            <ChefHat size={18} /> Kitchen
+          <button onClick={() => navigate('/kitchen')} className={utilityClass}>
+            <ChefHat size={17} /> Kitchen
           </button>
-          <button onClick={() => setShowChangePw(true)} className={utilClass}>
-            <KeyRound size={18} /> My Password
+          <button onClick={() => setShowChangePw(true)} className={utilityClass}>
+            <KeyRound size={17} /> My Password
           </button>
-          <button onClick={() => logout().then(() => navigate('/login'))} className="flex items-center gap-3 px-5 py-3 rounded-2xl text-sm font-bold text-red-400 hover:bg-red-400/10 whitespace-nowrap transition-all">
-            <LogOut size={18} /> Logout
+          <button
+            onClick={() => logout().then(() => navigate('/login'))}
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-xs font-semibold text-chiya transition-colors hover:bg-rose-50 md:w-full md:px-4 md:text-sm"
+          >
+            <LogOut size={17} /> Logout
           </button>
+          <p className="hidden px-4 pt-3 text-[10px] text-bean/40 md:block">Powered by {PLATFORM_NAME}™</p>
         </div>
       </aside>
 
-      <main className="flex-grow md:ml-72 p-4 md:p-10 overflow-y-auto">
+      <main className="min-w-0 flex-1 px-4 pb-8 pt-5 sm:px-6 md:ml-64 md:px-8 md:pt-8 xl:px-10">
+        <div className="mb-5 hidden items-center justify-between border-b border-espresso/10 pb-5 md:flex">
+          <div>
+            <p className="text-xs font-semibold text-bean/45">Owner workspace <ChevronRight size={12} className="mx-1 inline" /> {activeTab.label}</p>
+            <h1 className="mt-1 text-sm font-bold text-bean">{activeTab.label}</h1>
+          </div>
+          <div className="flex items-center gap-2 rounded-full border border-espresso/10 bg-white px-3 py-2 text-xs font-semibold text-bean/65">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+            Signed in as {user?.displayName || 'Owner'}
+          </div>
+        </div>
         <Routes>
           <Route index element={<AnalyticsTab />} />
           <Route path="history" element={<OrderHistoryTab />} />

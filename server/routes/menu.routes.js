@@ -18,6 +18,7 @@ const shape = (r) => ({
   description: r.description ?? '',
   cookMinutes: r.cook_minutes ?? null,
   isAvailable: !!r.is_available,
+  dietaryType: r.dietary_type ?? 'unspecified',
 });
 
 // Public: customer menu. Owners get sold-out items too (to toggle them back).
@@ -39,11 +40,11 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', requireAuth('owner'), validate(menuItemSchema), async (req, res, next) => {
   try {
-    const { name, category, price, image, description, cookMinutes, isAvailable } = req.body;
+    const { name, category, price, image, description, cookMinutes, isAvailable, dietaryType } = req.body;
     const row = sb(
       await supabase
         .from('menu_items')
-        .insert({ name, category, price, image, description, cook_minutes: cookMinutes, is_available: isAvailable })
+        .insert({ name, category, price, image, description, cook_minutes: cookMinutes, is_available: isAvailable, dietary_type: dietaryType })
         .select('*')
         .single()
     );
@@ -58,11 +59,11 @@ router.put('/:id', requireAuth('owner'), validate(menuItemSchema), async (req, r
   try {
     const id = intId(req.params.id);
     if (id === null) return res.status(404).json({ error: 'Item not found' });
-    const { name, category, price, image, description, cookMinutes, isAvailable } = req.body;
+    const { name, category, price, image, description, cookMinutes, isAvailable, dietaryType } = req.body;
     const rows = sb(
       await supabase
         .from('menu_items')
-        .update({ name, category, price, image, description, cook_minutes: cookMinutes, is_available: isAvailable })
+        .update({ name, category, price, image, description, cook_minutes: cookMinutes, is_available: isAvailable, dietary_type: dietaryType })
         .eq('id', id)
         .eq('is_deleted', false)
         .select('*')

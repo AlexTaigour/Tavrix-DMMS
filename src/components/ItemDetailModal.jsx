@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Plus, Minus, Coffee, Clock } from 'lucide-react';
+import DietaryBadge from './DietaryBadge';
 
 // Large item view: image, name, description, estimated cook time, order button.
 // Same bottom-sheet-on-mobile / centered-card-on-desktop pattern as the
@@ -57,7 +58,10 @@ export default function ItemDetailModal({ item, quantity, onUpdateQuantity, onCl
         <div className="p-6 space-y-4">
           <div className="flex justify-between items-start gap-3">
             <div>
-              <h2 className="text-2xl font-black text-bean leading-tight">{item.name}</h2>
+              <div className="flex items-center gap-2">
+                <DietaryBadge dietaryType={item.dietaryType} />
+                <h2 className="text-2xl font-black text-bean leading-tight">{item.name}</h2>
+              </div>
               <span className="inline-block mt-1.5 bg-cream text-espresso px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                 {item.category}
               </span>
