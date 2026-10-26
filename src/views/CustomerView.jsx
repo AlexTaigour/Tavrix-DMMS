@@ -39,6 +39,7 @@ function getBrowserLocation() {
 const CustomerView = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const menuUrl = `${location.pathname}${location.search}${location.hash}`;
   const qrTable = useMemo(
     () => (new URLSearchParams(window.location.search).get('table') || '').trim(),
     []
@@ -262,7 +263,10 @@ const CustomerView = () => {
       } catch {}
       setCart({});
       setShowOrderForm(false);
-      navigate(`/track/${order.publicCode}`, { replace: true });
+      navigate(`/track/${order.publicCode}`, {
+        replace: true,
+        state: { returnTo: menuUrl },
+      });
     } catch (err) {
       // Server is the real gate — it may reject if the network/location changed.
       if (err.status === 403) checkGate(coordsRef.current);
@@ -274,7 +278,7 @@ const CustomerView = () => {
 
   const openMyOrder = () => {
     if (trackable) {
-      navigate('/orders');
+      navigate('/orders', { state: { returnTo: menuUrl } });
       return;
     }
     setTrackCode('');
@@ -286,7 +290,7 @@ const CustomerView = () => {
     const code = trackCode.trim().toUpperCase();
     if (!code) return;
     setShowTrackOrder(false);
-    navigate(`/track/${encodeURIComponent(code)}`);
+    navigate(`/track/${encodeURIComponent(code)}`, { state: { returnTo: menuUrl } });
   };
 
   if (!menu) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Coffee, ArrowLeft, Timer, CheckCircle2, Clock3, ShoppingBag, Armchair, Radio, PackageCheck, CircleAlert, Receipt } from 'lucide-react';
 import { trackOrder } from '../api/client';
@@ -28,6 +28,11 @@ const TAKEAWAY_MESSAGE = {
 
 export default function OrderTrack() {
   const { publicCode } = useParams();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo;
+  const menuUrl = typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')
+    ? returnTo
+    : '/';
   const [order, setOrder] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
@@ -66,7 +71,7 @@ export default function OrderTrack() {
         <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-chiya"><CircleAlert size={28} /></span>
         <p className="text-lg font-black text-bean">We couldn’t find that order</p>
         <p className="max-w-sm text-sm text-bean/55">Check the tracking link or ask our team for help.</p>
-        <Link to="/" className="mt-2 inline-flex min-h-11 items-center rounded-xl bg-chiya px-5 py-2.5 font-bold text-white">Back to menu</Link>
+        <Link to={menuUrl} className="mt-2 inline-flex min-h-11 items-center rounded-xl bg-chiya px-5 py-2.5 font-bold text-white">Back to menu</Link>
       </div>
     );
   }
@@ -84,10 +89,10 @@ export default function OrderTrack() {
     <div className="min-h-screen bg-[#fff8f6] px-4 pb-8 pt-4 sm:pt-8">
       <div className="mx-auto max-w-5xl">
       <nav aria-label="Order navigation" className="mb-4 flex flex-wrap items-center gap-2 sm:mb-6">
-        <Link to="/" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-espresso/10 bg-white px-4 text-sm font-bold text-bean/70 shadow-sm transition-colors hover:border-espresso/20 hover:text-bean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya">
+        <Link to={menuUrl} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-espresso/10 bg-white px-4 text-sm font-bold text-bean/70 shadow-sm transition-colors hover:border-espresso/20 hover:text-bean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya">
           <ArrowLeft size={17} /> Back to menu
         </Link>
-        <Link to="/orders" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2">
+        <Link to="/orders" state={{ returnTo: menuUrl }} className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2">
           <Receipt size={17} /> My orders
         </Link>
       </nav>

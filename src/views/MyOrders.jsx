@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Armchair, CheckCircle2, CircleAlert, Clock3, PackageCheck, ShoppingBag } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Armchair, CheckCircle2, CircleAlert, Clock3, PackageCheck, ShoppingBag } from 'lucide-react';
 import { trackOrder } from '../api/client';
 import { getSocket } from '../api/socket';
 import StatusBadge from '../components/StatusBadge';
@@ -10,6 +10,11 @@ import { getTrackedOrders } from '../utils/trackedOrders';
 import { groupPendingOrders } from '../utils/groupPendingOrders';
 
 export default function MyOrders() {
+  const location = useLocation();
+  const returnTo = location.state?.returnTo;
+  const menuUrl = typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')
+    ? returnTo
+    : '/';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const displayOrders = groupPendingOrders(orders.filter((entry) => entry.order).map((entry) => ({
@@ -65,7 +70,7 @@ export default function MyOrders() {
   return (
     <div className="min-h-screen bg-[#fff8f6] px-4 pb-8 pt-4 sm:pt-8">
       <div className="mx-auto max-w-3xl">
-        <Link to="/" className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-bean/65 transition-colors hover:bg-white hover:text-chiya">
+        <Link to={menuUrl} className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-bean/65 transition-colors hover:bg-white hover:text-chiya">
           <ArrowLeft size={17} /> Back to menu
         </Link>
         <header className="mb-5">
@@ -79,7 +84,7 @@ export default function MyOrders() {
             <PackageCheck size={34} className="mx-auto text-chiya" />
             <h2 className="mt-3 font-black text-bean">No saved orders yet</h2>
             <p className="mt-1 text-sm text-bean/55">Place an order or enter its tracking code from the menu page.</p>
-            <Link to="/" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-chiya px-5 py-2.5 font-bold text-white">Go to menu</Link>
+            <Link to={menuUrl} className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-chiya px-5 py-2.5 font-bold text-white">Go to menu</Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -95,7 +100,7 @@ export default function MyOrders() {
                             <p className="text-sm font-black text-bean">{groupedOrders.length} pending orders combined</p>
                             <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1">
                               {groupedOrders.map((entry) => (
-                                <Link key={entry.trackingCode} to={`/track/${encodeURIComponent(entry.trackingCode)}`} className="font-mono text-xs font-bold text-chiya hover:underline">
+                                <Link key={entry.trackingCode} to={`/track/${encodeURIComponent(entry.trackingCode)}`} state={{ returnTo: menuUrl }} className="inline-flex min-h-8 items-center rounded-lg border border-chiya/20 bg-rose-50 px-2.5 font-mono text-xs font-bold text-chiya transition-colors hover:border-chiya/40 hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2">
                                   {entry.publicCode}
                                 </Link>
                               ))}
@@ -129,15 +134,17 @@ export default function MyOrders() {
                     </div>
                     <div className="mt-4 flex items-center justify-between">
                       {isGrouped ? (
-                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                        <div className="flex flex-wrap gap-2">
                           {groupedOrders.map((entry) => (
-                            <Link key={entry.trackingCode} to={`/track/${encodeURIComponent(entry.trackingCode)}`} className="text-sm font-bold text-chiya hover:underline">
-                              Track {entry.publicCode}
+                            <Link key={entry.trackingCode} to={`/track/${encodeURIComponent(entry.trackingCode)}`} state={{ returnTo: menuUrl }} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-chiya px-3 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2 active:scale-[0.98]">
+                              Track {entry.publicCode} <ArrowRight size={14} />
                             </Link>
                           ))}
                         </div>
                       ) : (
-                        <Link to={`/track/${encodeURIComponent(order.trackingCode)}`} className="text-sm font-bold text-chiya hover:underline">View order details</Link>
+                        <Link to={`/track/${encodeURIComponent(order.trackingCode)}`} state={{ returnTo: menuUrl }} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-chiya px-3 py-2 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2 active:scale-[0.98]">
+                          Track order <ArrowRight size={14} />
+                        </Link>
                       )}
                     </div>
               </article>
