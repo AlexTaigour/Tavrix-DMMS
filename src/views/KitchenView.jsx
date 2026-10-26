@@ -11,6 +11,7 @@ import BrewingLoader from '../components/BrewingLoader';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import { toast } from '../components/Toast';
 import { minutesSince } from '../utils/format';
+import { groupPendingOrders } from '../utils/groupPendingOrders';
 
 // KDS column definitions: which statuses land in which lane, and the primary
 // action for each card.
@@ -37,24 +38,30 @@ function KdsCard({ order, action, onStatusLocal }) {
   }, []);
   const mins = minutesSince(order.createdAt);
 
-  const act = async (to) => {
+  const act = async (to, selectedOrders = order.orders) => {
     if (busy) return;
     setBusy(true);
-    // Optimistic: the status change moves the card to the next lane
-    // immediately; persistence happens in the background.
-    const undo = onStatusLocal?.(order.id, to);
-    try {
-      await setOrderStatus(order.id, to);
-    } catch (err) {
-      undo?.(); // conditional — a concurrent user's pushed status wins
-      toast(err.message);
-    } finally {
-      setBusy(false);
+    const targets = selectedOrders?.length ? selectedOrders : [order];
+    const undos = new Map(targets.map((target) => [target.id, onStatusLocal?.(target.id, to)]));
+    const results = await Promise.allSettled(targets.map((target) => setOrderStatus(target.id, to)));
+    const failures = results.flatMap((result, index) => {
+      if (result.status === 'fulfilled') return [];
+      undos.get(targets[index].id)?.();
+      return [targets[index].publicCode];
+    });
+    if (failures.length) {
+      toast(
+        failures.length === targets.length
+          ? `Could not update ${failures.join(', ')}`
+          : `Some orders updated; could not update ${failures.join(', ')}`
+      );
     }
+    setBusy(false);
   };
 
   const isLate = mins >= LATE_MINUTES;
   const isTakeaway = order.orderType === 'takeaway';
+  const grouped = order.orders.length > 1;
 
   return (
     <article className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-shadow hover:shadow-md ${isLate ? 'border-red-300' : 'border-espresso/10'}`}>
@@ -68,12 +75,35 @@ function KdsCard({ order, action, onStatusLocal }) {
           <p className="text-3xl font-black leading-tight text-bean">
             {isTakeaway ? `#${order.queueNo ?? '–'}` : `Table ${order.table}`}
           </p>
-          <p className="mt-1 truncate text-xs font-semibold text-bean/55">{order.name || 'Walk-in'} <span className="px-1 text-bean/25">·</span> {order.publicCode}</p>
+          <p className="mt-1 truncate text-xs font-semibold text-bean/55">
+            {order.name || 'Walk-in'} <span className="px-1 text-bean/25">·</span>
+            {grouped ? `${order.orders.length} pending orders` : order.publicCode}
+          </p>
         </div>
         <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-black ${isLate ? 'bg-red-50 text-red-700' : 'bg-cream text-bean/70'}`}>
           <Clock3 size={13} /> {formatElapsed(mins)}
         </span>
       </div>
+      {grouped && (
+        <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-amber-800">Separate tickets · cancel individually</p>
+          <div className="space-y-1">
+            {order.orders.map((ticket) => (
+              <div key={ticket.id} className="flex items-center justify-between gap-2 text-xs">
+                <span className="font-mono font-bold text-bean">{ticket.publicCode}</span>
+                <button
+                  type="button"
+                  onClick={() => window.confirm(`Cancel order ${ticket.publicCode}?`) && act('cancelled', [ticket])}
+                  disabled={busy}
+                  className="font-bold text-red-700 hover:underline disabled:opacity-50"
+                >
+                  Cancel ticket
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <ul className="mb-3 space-y-2.5 rounded-xl bg-[#fff8f6] p-3.5">
         {order.items.map((it) => (
           <li key={it.id} className="flex items-start gap-2.5 text-lg font-bold leading-snug text-bean">
@@ -94,17 +124,19 @@ function KdsCard({ order, action, onStatusLocal }) {
           disabled={busy}
           className={`min-h-14 flex-1 rounded-xl py-3 text-base font-black text-white transition-transform active:scale-[0.98] disabled:opacity-50 ${action.style}`}
         >
-          {busy ? 'Updating…' : action.label}
+          {busy ? 'Updating…' : grouped ? `${action.label.replace(' order', '')} ${order.orders.length} orders` : action.label}
         </button>
-        <button
-          onClick={() => window.confirm('Cancel this order?') && act('cancelled')}
-          disabled={busy}
-          className="min-h-14 min-w-14 rounded-xl border border-espresso/10 bg-white px-4 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
-          aria-label={`Cancel order ${order.publicCode}`}
-          title="Cancel order"
-        >
-          ✕
-        </button>
+        {!grouped && (
+          <button
+            onClick={() => window.confirm('Cancel this order?') && act('cancelled', [order])}
+            disabled={busy}
+            className="min-h-14 min-w-14 rounded-xl border border-espresso/10 bg-white px-4 text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+            aria-label={`Cancel order ${order.publicCode}`}
+            title="Cancel order"
+          >
+            ✕
+          </button>
+        )}
       </div>
       </div>
     </article>
@@ -198,6 +230,7 @@ export default function KitchenView() {
   const [showStock, setShowStock] = useState(false);
   const [selectedLane, setSelectedLane] = useState('new');
   const orders = liveOrders || [];
+  const displayOrders = groupPendingOrders(orders);
   const newCount = orders.filter((order) => order.status === 'pending').length;
   const activeCount = orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)).length;
   const lateCount = orders.filter((order) => ['pending', 'accepted', 'preparing'].includes(order.status)
@@ -246,8 +279,8 @@ export default function KitchenView() {
           <BrewingLoader tone="light" label="Loading kitchen orders" />
         </div>
       ) : (
-        <main className="mx-auto max-w-[1800px] p-4 md:p-6">
-          <section aria-label="Kitchen queue summary" className="mb-5 grid gap-3 sm:grid-cols-3">
+        <main className="mx-auto flex h-[calc(100dvh-4.5rem)] max-w-[1800px] flex-col overflow-hidden p-4 md:p-6">
+          <section aria-label="Kitchen queue summary" className="mb-5 grid shrink-0 gap-3 sm:grid-cols-3">
             {[
               { label: 'Orders in kitchen', value: activeCount, icon: ClipboardList, color: 'bg-chiya/10 text-chiya' },
               { label: 'New orders', value: newCount, icon: Radio, color: 'bg-amber-50 text-amber-700' },
@@ -259,13 +292,13 @@ export default function KitchenView() {
               </article>
             ))}
           </section>
-          <div className="mb-4">
+          <div className="mb-4 shrink-0">
             <h2 className="text-lg font-black text-bean">Kitchen queue</h2>
             <p className="mt-0.5 text-xs text-bean/55">Work oldest tickets first. Orders are flagged after {LATE_MINUTES} minutes.</p>
           </div>
-          <nav aria-label="Kitchen order stages" className="mb-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
+          <nav aria-label="Kitchen order stages" className="mb-4 flex shrink-0 gap-2 overflow-x-auto pb-1 md:hidden">
             {LANES.map((lane) => {
-              const count = orders.filter((order) => lane.statuses.includes(order.status)).length;
+              const count = displayOrders.filter((order) => lane.statuses.includes(order.status)).length;
               const active = selectedLane === lane.key;
               return (
                 <button
@@ -279,18 +312,18 @@ export default function KitchenView() {
               );
             })}
           </nav>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
           {LANES.map((lane) => {
-            const laneOrders = orders
+            const laneOrders = displayOrders
               .filter((o) => lane.statuses.includes(o.status))
               .sort((a, b) => a.createdAt.localeCompare(b.createdAt)); // oldest first
             return (
               <section
                 key={lane.key}
                 aria-label={`${lane.title} orders`}
-                className={`${lane.key === selectedLane ? 'block' : 'hidden md:block'} min-h-[260px] rounded-2xl border border-espresso/10 border-t-4 bg-white shadow-sm ${lane.accent}`}
+                className={`${lane.key === selectedLane ? 'flex' : 'hidden md:flex'} min-h-0 flex-col overflow-hidden rounded-2xl border border-espresso/10 border-t-4 bg-white shadow-sm ${lane.accent}`}
               >
-                <h2 className="flex items-center justify-between rounded-t-xl bg-white px-4 py-4 text-sm font-black uppercase tracking-widest text-bean">
+                <h2 className="flex shrink-0 items-center justify-between rounded-t-xl bg-white px-4 py-4 text-sm font-black uppercase tracking-widest text-bean">
                   <span>{lane.title} orders</span>
                   <span className="rounded-full bg-cream px-3 py-1 text-xs text-bean/70">{laneOrders.length}</span>
                 </h2>
@@ -298,7 +331,7 @@ export default function KitchenView() {
                   <AnimatedList
                     items={laneOrders}
                     keyOf={(o) => o.id}
-                    className="space-y-3 px-3 pb-3 md:px-4"
+                    className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 pb-3 pt-1 [scrollbar-gutter:stable] md:px-4"
                     renderItem={(order) => <KdsCard order={order} action={lane.action} onStatusLocal={applyStatusLocal} />}
                   />
                 ) : (

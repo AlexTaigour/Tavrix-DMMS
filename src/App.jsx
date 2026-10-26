@@ -8,6 +8,7 @@ import { PLATFORM_NAME, PLATFORM_TAGLINE, PLATFORM_COMPANY, PLATFORM_COMPANY_URL
 
 const CustomerView = lazy(() => import('./views/CustomerView'));
 const OrderTrack = lazy(() => import('./views/OrderTrack'));
+const MyOrders = lazy(() => import('./views/MyOrders'));
 const Login = lazy(() => import('./views/Login'));
 const StaffView = lazy(() => import('./views/StaffView'));
 const KitchenView = lazy(() => import('./views/KitchenView'));
@@ -30,6 +31,7 @@ const App = () => (
           <Suspense fallback={<RouteLoader />}>
           <Routes>
           <Route path="/" element={<CustomerView />} />
+          <Route path="/orders" element={<MyOrders />} />
           <Route path="/track/:publicCode" element={<OrderTrack />} />
           <Route path="/login" element={<Login />} />
           <Route

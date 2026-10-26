@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { ShoppingCart, X, Utensils, ClipboardList, CheckCircle2, Search, Plus, Minus, Trash2, Receipt, Wifi, Navigation, ArrowRight, Clock3, Flame, MapPin } from 'lucide-react';
 import { fetchMenu, fetchTables, placeOrder, fetchOrderGateStatus } from '../api/client';
 import { getSocket } from '../api/socket';
@@ -11,6 +12,7 @@ import ClickSpark from '../components/reactbits/ClickSpark';
 import ShinyButton from '../components/reactbits/ShinyButton';
 import CountUp from '../components/reactbits/CountUp';
 import { CAFE_NAME, CAFE_TAGLINE, CAFE_LOGO } from '../utils/brand';
+import { getTrackedOrders, rememberOrder } from '../utils/trackedOrders';
 
 // Returning customers skip retyping their details.
 const saved = (() => {
@@ -20,16 +22,6 @@ const saved = (() => {
     return {};
   }
 })();
-
-const lastOrderCode = () => {
-  try {
-    const { code } = JSON.parse(localStorage.getItem('tvx_last_order') || '{}');
-    return typeof code === 'string' && code.trim() ? code.trim() : null;
-  } catch {
-    return null;
-  }
-};
-
 
 // One-shot browser GPS read for the in-café geofence. Rejects on denial/timeout
 // so the caller can tell the customer what to do. Needs https (the live site).
@@ -46,6 +38,7 @@ function getBrowserLocation() {
 
 const CustomerView = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const qrTable = useMemo(
     () => (new URLSearchParams(window.location.search).get('table') || '').trim(),
     []
@@ -67,6 +60,8 @@ const CustomerView = () => {
   const [locating, setLocating] = useState(false);
   const [geoErr, setGeoErr] = useState('');
   const coordsRef = useRef(null); // last GPS fix, sent with the order
+  const orderSheetTouch = useRef(null);
+  const activeOverlayRef = useRef(null);
   const canOrder = gate.allowed;
   const [formData, setFormData] = useState({
     name: saved.name || '',
@@ -75,7 +70,30 @@ const CustomerView = () => {
     orderType: 'dine',
     note: '',
   });
-  const trackable = useMemo(lastOrderCode, []);
+  const trackable = useMemo(() => getTrackedOrders().length > 0, []);
+  activeOverlayRef.current = showOrderForm ? 'order' : detailItemId != null ? 'item' : null;
+
+  const openItemDetail = (itemId) => {
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      state: { ...location.state, customerOverlay: 'item' },
+    });
+    setDetailItemId(itemId);
+  };
+  const closeItemDetail = () => {
+    setDetailItemId(null);
+    if (location.state?.customerOverlay === 'item') navigate(-1);
+  };
+
+  const openOrderForm = () => {
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      state: { customerOverlay: 'order' },
+    });
+    setShowOrderForm(true);
+  };
+  const closeOrderForm = () => {
+    setShowOrderForm(false);
+    if (location.state?.customerOverlay === 'order') navigate(-1);
+  };
 
   // Derived from the live menu so socket menu:updated refreshes flow into an
   // open modal (e.g. it flips to sold-out live); closes if the item is deleted.
@@ -84,14 +102,23 @@ const CustomerView = () => {
     [menu, detailItemId]
   );
   useEffect(() => {
-    if (detailItemId != null && menu && !detailItem) setDetailItemId(null);
-  }, [detailItemId, menu, detailItem]);
+    if (detailItemId != null && menu && !detailItem) closeItemDetail();
+  }, [detailItemId, menu, detailItem, location.state, navigate]);
 
   useEffect(() => {
     const locked = showOrderForm || detailItemId != null;
     document.body.style.overflow = locked ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [showOrderForm, detailItemId]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (activeOverlayRef.current === 'order') setShowOrderForm(false);
+      if (activeOverlayRef.current === 'item') setDetailItemId(null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Ask the server whether this device may order. Optional coords feed the GPS
   // geofence. Fail open — a check error must never block a real customer.
@@ -190,8 +217,8 @@ const CustomerView = () => {
 
   // If the last line is removed inside the modal there is nothing to confirm.
   useEffect(() => {
-    if (showOrderForm && cartItems.length === 0) setShowOrderForm(false);
-  }, [showOrderForm, cartItems.length]);
+    if (showOrderForm && cartItems.length === 0) closeOrderForm();
+  }, [showOrderForm, cartItems.length, location.state, navigate]);
 
   const submitOrder = async (e) => {
     e.preventDefault();
@@ -226,11 +253,11 @@ const CustomerView = () => {
       });
       try {
         localStorage.setItem('tvx_customer', JSON.stringify({ name: formData.name, phone: formData.phone }));
-        localStorage.setItem('tvx_last_order', JSON.stringify({ code: order.publicCode, at: Date.now() }));
+        rememberOrder(order.publicCode);
       } catch {}
       setCart({});
       setShowOrderForm(false);
-      navigate(`/track/${order.publicCode}`);
+      navigate(`/track/${order.publicCode}`, { replace: true });
     } catch (err) {
       // Server is the real gate — it may reject if the network/location changed.
       if (err.status === 403) checkGate(coordsRef.current);
@@ -242,7 +269,7 @@ const CustomerView = () => {
 
   const openMyOrder = () => {
     if (trackable) {
-      navigate(`/track/${encodeURIComponent(trackable)}`);
+      navigate('/orders');
       return;
     }
     setTrackCode('');
@@ -440,7 +467,7 @@ const CustomerView = () => {
                     item={item}
                     quantity={cart[item.id] || 0}
                     onUpdateQuantity={updateQty}
-                    onOpenDetail={setDetailItemId}
+                    onOpenDetail={openItemDetail}
                   />
                 )}
               />
@@ -499,7 +526,7 @@ const CustomerView = () => {
                     <span>Total</span><span>Rs. {total}</span>
                   </div>
                   <button
-                    onClick={() => setShowOrderForm(true)}
+                    onClick={openOrderForm}
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-chiya px-4 py-3 text-sm font-bold text-white transition hover:bg-espresso"
                   >
                     Continue to checkout <ArrowRight size={16} />
@@ -530,7 +557,7 @@ const CustomerView = () => {
       {cartItems.length > 0 && !showOrderForm && (
         <div className="fixed bottom-4 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 lg:hidden">
           <ShinyButton
-            onClick={() => setShowOrderForm(true)}
+            onClick={openOrderForm}
             className="w-full bg-chiya text-white p-4 rounded-2xl shadow-xl font-black"
           >
             <span className="flex w-full items-center justify-between">
@@ -543,30 +570,63 @@ const CustomerView = () => {
         </div>
       )}
 
-      {detailItem && (
-        <ItemDetailModal
-          item={detailItem}
-          quantity={cart[detailItem.id] || 0}
-          onUpdateQuantity={updateQty}
-          onClose={() => setDetailItemId(null)}
-        />
-      )}
+      <AnimatePresence>
+        {detailItem && (
+          <ItemDetailModal
+            key={detailItem.id}
+            item={detailItem}
+            quantity={cart[detailItem.id] || 0}
+            onUpdateQuantity={updateQty}
+            onClose={closeItemDetail}
+          />
+        )}
+      </AnimatePresence>
 
-      {showOrderForm && (
-        <div
-          className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center sm:px-4"
-          onClick={() => setShowOrderForm(false)}
-        >
-          <div
+      <AnimatePresence>
+        {showOrderForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 sm:items-center sm:px-4"
+            onClick={closeOrderForm}
+          >
+            <motion.div
+              initial={{ y: 500 }}
+              animate={{ y: 0 }}
+              exit={{ y: 500 }}
+              transition={{ duration: 0.32, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[92vh] overflow-y-auto"
+            onTouchStart={(event) => {
+              if (event.target.closest('button, input, textarea, select')) {
+                orderSheetTouch.current = null;
+                return;
+              }
+              const touch = event.touches[0];
+              orderSheetTouch.current = {
+                x: touch.clientX,
+                y: touch.clientY,
+                scrollTop: event.currentTarget.scrollTop,
+              };
+            }}
+            onTouchEnd={(event) => {
+              const start = orderSheetTouch.current;
+              orderSheetTouch.current = null;
+              if (!start || start.scrollTop > 0) return;
+              const touch = event.changedTouches[0];
+              const deltaY = touch.clientY - start.y;
+              const deltaX = touch.clientX - start.x;
+              if (deltaY > 100 && deltaY > Math.abs(deltaX) * 1.25) closeOrderForm();
+            }}
+            className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
           >
             <div className="sm:hidden w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-black handwritten text-espresso flex items-center gap-2">
                 <ClipboardList size={24} /> Your Order
               </h2>
-              <button onClick={() => setShowOrderForm(false)} aria-label="Close your order" className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
+              <button onClick={closeOrderForm} aria-label="Close your order" className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100">
                 <X size={20} />
               </button>
             </div>
@@ -770,9 +830,9 @@ const CustomerView = () => {
                             Track order <ArrowRight size={16} />
                           </button>
                         </form>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               )}
               {error && <p className="text-red-500 text-sm font-bold text-center">{error}</p>}
@@ -785,9 +845,10 @@ const CustomerView = () => {
                 <CheckCircle2 size={20} /> {submitting ? 'Placing…' : `Confirm · Rs. ${total}`}
               </ShinyButton>
             </form>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

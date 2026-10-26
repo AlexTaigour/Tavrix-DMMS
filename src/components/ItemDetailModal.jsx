@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import { X, Plus, Minus, Coffee, Clock } from 'lucide-react';
 import DietaryBadge from './DietaryBadge';
 
@@ -8,6 +9,7 @@ import DietaryBadge from './DietaryBadge';
 // bump the quantity without reopening.
 export default function ItemDetailModal({ item, quantity, onUpdateQuantity, onClose }) {
   const [imgFailed, setImgFailed] = useState(false);
+  const touchStart = useRef(null);
   const soldOut = item.isAvailable === false;
 
   useEffect(() => {
@@ -17,13 +19,43 @@ export default function ItemDetailModal({ item, quantity, onUpdateQuantity, onCl
   }, [onClose]);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       className="fixed inset-0 z-50 bg-black/70 flex items-end sm:items-center justify-center sm:px-4"
       onClick={onClose}
     >
-      <div
+      <motion.div
+        initial={{ y: 500 }}
+        animate={{ y: 0 }}
+        exit={{ y: 500 }}
+        transition={{ duration: 0.32, ease: 'easeOut' }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] overflow-y-auto"
+        onTouchStart={(event) => {
+          if (event.target.closest('button, input, textarea, select')) {
+            touchStart.current = null;
+            return;
+          }
+          const touch = event.touches[0];
+          touchStart.current = {
+            x: touch.clientX,
+            y: touch.clientY,
+            scrollTop: event.currentTarget.scrollTop,
+          };
+        }}
+        onTouchEnd={(event) => {
+          const start = touchStart.current;
+          touchStart.current = null;
+          if (!start || start.scrollTop > 0 || event.currentTarget.scrollTop > 0) return;
+          const touch = event.changedTouches[0];
+          const deltaY = touch.clientY - start.y;
+          const deltaX = touch.clientX - start.x;
+          if (deltaY > 80 && deltaY > Math.abs(deltaX) * 1.25) onClose();
+        }}
+        onTouchCancel={() => { touchStart.current = null; }}
+        className="max-h-[92vh] w-full max-w-md touch-pan-y overflow-y-auto overscroll-contain rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
       >
         <div className="relative">
           {item.image && !imgFailed ? (
@@ -116,7 +148,7 @@ export default function ItemDetailModal({ item, quantity, onUpdateQuantity, onCl
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

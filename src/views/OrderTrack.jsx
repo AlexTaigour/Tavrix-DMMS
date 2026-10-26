@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Coffee, ArrowLeft, Timer, CheckCircle2, Clock3, ShoppingBag, Armchair, Radio, PackageCheck, CircleAlert } from 'lucide-react';
+import { Coffee, ArrowLeft, Timer, CheckCircle2, Clock3, ShoppingBag, Armchair, Radio, PackageCheck, CircleAlert, Receipt } from 'lucide-react';
 import { trackOrder } from '../api/client';
 import { getSocket } from '../api/socket';
 import StatusTimeline from '../components/StatusTimeline';
@@ -9,6 +9,7 @@ import ServiceCallButtons from '../components/ServiceCallButtons';
 import BlurText from '../components/reactbits/BlurText';
 import BrewingLoader from '../components/BrewingLoader';
 import { formatRs } from '../utils/format';
+import { rememberOrder } from '../utils/trackedOrders';
 
 // What the customer actually wants to know at each step.
 const STATUS_MESSAGE = {
@@ -37,11 +38,7 @@ export default function OrderTrack() {
         .then((o) => {
           if (!live) return;
           setOrder(o);
-          try {
-            localStorage.setItem('tvx_last_order', JSON.stringify({ code: o.publicCode, at: Date.now() }));
-          } catch {
-            // Tracking remains available for this visit if storage is unavailable.
-          }
+          rememberOrder(o.publicCode);
         })
         .catch(() => live && setNotFound(true));
     load();
@@ -86,9 +83,14 @@ export default function OrderTrack() {
   return (
     <div className="min-h-screen bg-[#fff8f6] px-4 pb-8 pt-4 sm:pt-8">
       <div className="mx-auto max-w-5xl">
-      <Link to="/" className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-bean/65 transition-colors hover:bg-white hover:text-chiya sm:mb-6">
-        <ArrowLeft size={17} /> Back to menu
-      </Link>
+      <nav aria-label="Order navigation" className="mb-4 flex flex-wrap items-center gap-2 sm:mb-6">
+        <Link to="/" className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-espresso/10 bg-white px-4 text-sm font-bold text-bean/70 shadow-sm transition-colors hover:border-espresso/20 hover:text-bean focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya">
+          <ArrowLeft size={17} /> Back to menu
+        </Link>
+        <Link to="/orders" className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-chiya px-4 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2">
+          <Receipt size={17} /> My orders
+        </Link>
+      </nav>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -35,7 +35,11 @@ export const createOrderSchema = z
         })
       )
       .min(1)
-      .max(30),
+      .max(30)
+      .refine(
+        (items) => new Set(items.map((item) => item.menuItemId)).size === items.length,
+        { message: 'Each menu item may only appear once', path: ['items'] }
+      ),
   })
   .refine((d) => d.orderType === 'takeaway' || (d.table && d.table.length > 0), {
     message: 'Table is required for dine-in orders',

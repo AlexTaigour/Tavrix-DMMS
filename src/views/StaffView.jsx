@@ -11,6 +11,7 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import TableBoard from '../components/TableBoard';
 import ServiceCallsBar from '../components/ServiceCallsBar';
 import BrewingLoader from '../components/BrewingLoader';
+import { groupPendingOrders } from '../utils/groupPendingOrders';
 
 export default function StaffView() {
   const { user, logout } = useAuth();
@@ -23,10 +24,11 @@ export default function StaffView() {
   const [filter, setFilter] = useState('all');
 
   const orders = liveOrders || [];
+  const displayOrders = useMemo(() => groupPendingOrders(orders), [orders]);
   const visible = useMemo(() => {
-    if (filter === 'ready') return orders.filter((o) => o.status === 'cooked');
-    return orders;
-  }, [orders, filter]);
+    if (filter === 'ready') return displayOrders.filter((o) => o.status === 'cooked');
+    return displayOrders;
+  }, [displayOrders, filter]);
 
   const readyCount = orders.filter((o) => o.status === 'cooked').length;
   const newCount = orders.filter((o) => o.status === 'pending').length;
@@ -154,7 +156,7 @@ export default function StaffView() {
         ) : (
           <AnimatedList
             items={visible}
-            keyOf={(o) => o.id}
+            keyOf={(o) => o.orders.map((ticket) => ticket.id).join('-')}
             className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5"
             renderItem={(order) => <OrderCard order={order} role={user?.role === 'owner' ? 'owner' : 'staff'} onStatusLocal={applyStatusLocal} />}
           />

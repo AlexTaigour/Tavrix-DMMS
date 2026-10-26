@@ -138,6 +138,32 @@ export async function settleTable(tableNo, opts, user) {
       .single()
   );
 
+  // Record credit before marking orders settled, so a failed ledger write
+  // cannot make the customer's order look billed without recording the debt.
+  if (method === 'credit') {
+    try {
+      sb(
+        await supabase.from('credit_entries').insert({
+          customer_name: creditCustomer.name,
+          customer_phone: creditCustomer.phone,
+          amount: total,
+          method: 'credit',
+          payment_id: payment.id,
+          taken_by: user.id,
+          note,
+          created_at: nowIso(),
+        })
+      );
+    } catch (err) {
+      const cleanup = await supabase.from('payments').delete().eq('id', payment.id);
+      if (cleanup.error) {
+        console.error(`Credit ledger failed and payment ${payment.id} cleanup failed:`, cleanup.error.message);
+        throw httpError(500, 'Credit could not be recorded. Contact the owner before retrying this bill.');
+      }
+      throw err;
+    }
+  }
+
   // Optimistic guard: only claim orders still unpaid and not cancelled (a
   // cancel may race in between read and claim). If any order was grabbed by a
   // concurrent settle or cancelled, roll the payment back and let staff retry
@@ -152,25 +178,31 @@ export async function settleTable(tableNo, opts, user) {
       .select('id')
   );
   if (claimed.length !== orderIds.length) {
-    await supabase.from('orders').update({ payment_id: null }).eq('payment_id', payment.id);
-    await supabase.from('payments').delete().eq('id', payment.id);
+    const restore = claimed.length
+      ? await supabase
+          .from('orders')
+          .update({ payment_id: null })
+          .in('id', claimed.map((order) => order.id))
+          .eq('payment_id', payment.id)
+          .select('id')
+      : { data: [], error: null };
+    if (restore.error || restore.data.length !== claimed.length) {
+      console.error(`Settlement ${payment.id} order rollback was incomplete:`, restore.error?.message || 'order count mismatch');
+      throw httpError(500, 'Settlement conflicted and could not be fully rolled back. Contact the owner.');
+    }
+    if (method === 'credit') {
+      const ledgerCleanup = await supabase.from('credit_entries').delete().eq('payment_id', payment.id);
+      if (ledgerCleanup.error) {
+        console.error(`Settlement ${payment.id} credit rollback failed:`, ledgerCleanup.error.message);
+        throw httpError(500, 'Settlement conflicted and credit cleanup failed. Contact the owner.');
+      }
+    }
+    const paymentCleanup = await supabase.from('payments').delete().eq('id', payment.id);
+    if (paymentCleanup.error) {
+      console.error(`Settlement ${payment.id} payment rollback failed:`, paymentCleanup.error.message);
+      throw httpError(500, 'Settlement conflicted and payment cleanup failed. Contact the owner.');
+    }
     throw httpError(409, 'This table was just settled by someone else — refresh');
-  }
-
-  // Udhaaro: record what this customer now owes, linked to the payment.
-  if (method === 'credit') {
-    sb(
-      await supabase.from('credit_entries').insert({
-        customer_name: creditCustomer.name,
-        customer_phone: creditCustomer.phone,
-        amount: total,
-        method: 'credit',
-        payment_id: payment.id,
-        taken_by: user.id,
-        note,
-        created_at: nowIso(),
-      })
-    );
   }
 
   emitOrdersSettled({ tableNo, orderIds, paymentId: payment.id });
