@@ -42,6 +42,21 @@ export function signToken(user) {
   return jwt.sign({ sub: String(user.id), role: user.role }, JWT_SECRET, { expiresIn: TOKEN_TTL });
 }
 
+export function signTableQrToken(tableNo) {
+  // Deterministic, non-expiring tokens keep printed QR and future NFC URLs fixed.
+  return jwt.sign({ purpose: 'table-qr', tableNo }, JWT_SECRET, { noTimestamp: true });
+}
+
+export function verifyTableQrToken(token) {
+  if (!token) return null;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    return payload.purpose === 'table-qr' && typeof payload.tableNo === 'string' ? payload.tableNo : null;
+  } catch {
+    return null;
+  }
+}
+
 // Cookie flags. In production (public HTTPS) the session cookie MUST be Secure
 // so it is never sent over plain HTTP, and sameSite 'strict' tightens CSRF. In
 // dev / plain-HTTP LAN we drop Secure (a Secure cookie is never stored over

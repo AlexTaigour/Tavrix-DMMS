@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { Printer, Loader2, AlertTriangle } from 'lucide-react';
-import { fetchTables, fetchServerInfo } from '../../api/client';
+import { fetchTables, fetchTableQrTokens, fetchServerInfo } from '../../api/client';
 import { CAFE_NAME } from '../../utils/brand';
 
 // The URL a table's QR points at. Customers scan it and land on the menu with
-// their table already selected (CustomerView reads ?table=N on load).
+// their table already selected (CustomerView reads the table and signed QR token).
 //
 // Base URL: prefer the origin the owner is actually viewing (window.location) —
 // that's the same public HTTPS address customers use on a cloud deploy, and the
@@ -24,7 +24,8 @@ function pickBaseUrl(info) {
   return strip(info?.baseUrl);
 }
 
-const tableUrl = (base, table) => `${base}/?table=${encodeURIComponent(table)}`;
+const tableUrl = (base, table, token) =>
+  `${base}/?table=${encodeURIComponent(table)}&qr=${encodeURIComponent(token)}`;
 
 function TableQr({ url, table }) {
   const canvasRef = useRef(null);
@@ -98,13 +99,18 @@ function buildPrintHtml(cards) {
 
 export default function QrTab() {
   const [tables, setTables] = useState([]);
+  const [qrTokens, setQrTokens] = useState({});
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [printing, setPrinting] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchTables(), fetchServerInfo()])
-      .then(([t, i]) => { setTables(t); setInfo(i); })
+    Promise.all([fetchTables(), fetchServerInfo(), fetchTableQrTokens()])
+      .then(([t, i, qr]) => {
+        setTables(t);
+        setInfo(i);
+        setQrTokens(Object.fromEntries(qr.map(({ tableNo, token }) => [tableNo, token])));
+      })
       .catch((e) => setError(e.message));
   }, []);
 
@@ -124,7 +130,7 @@ export default function QrTab() {
       const cards = await Promise.all(
         tables.map(async (t) => ({
           table: t,
-          dataUrl: await QRCode.toDataURL(tableUrl(base, t), {
+          dataUrl: await QRCode.toDataURL(tableUrl(base, t, qrTokens[t]), {
             width: 600, margin: 2, color: { dark: '#4a3728' },
           }),
         }))
@@ -198,7 +204,7 @@ export default function QrTab() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {tables.map((t) => (
-          <TableQr key={t} table={t} url={tableUrl(base, t)} />
+          <TableQr key={t} table={t} url={tableUrl(base, t, qrTokens[t])} />
         ))}
       </div>
     </div>

@@ -22,6 +22,7 @@ export const createOrderSchema = z
     phone: z.string().trim().min(4).max(20).regex(/^[0-9+\-\s]+$/, 'Invalid phone'),
     orderType: z.enum(['dine', 'takeaway']).default('dine'),
     table: z.string().trim().max(10).optional(),
+    tableQrToken: z.string().max(2000).optional(),
     note: z.string().trim().max(500).default(''),
     // Optional device location for the in-café GPS geofence (order gate).
     // Absent when GPS isn't in use or the customer declined to share it.

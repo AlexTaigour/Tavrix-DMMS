@@ -40,7 +40,7 @@ Set these in the host's environment (dashboard or `.env` on a VPS). `.env.exampl
 | `SUPABASE_URL` | **Yes** | `https://abcd.supabase.co` | Your Supabase project URL. |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes (prod)** | *(secret)* | Server-only key that bypasses RLS. Use this in production and run `supabase-hardening.sql` (see §4). |
 | `SUPABASE_ANON_KEY` | Fallback | *(secret)* | Dev fallback. Works only under the allow-all RLS policy; behaves like a DB password. Used only if the service_role key is unset. |
-| `JWT_SECRET` | **Yes (prod)** | 64-char hex | Signs staff session tokens. If unset it is generated into `data/.jwt-secret`, which is wiped on every deploy on ephemeral hosts — logging all staff out. |
+| `JWT_SECRET` | **Yes (prod)** | 64-char hex | Signs staff session and permanent table QR/NFC tokens. If unset it is generated into `data/.jwt-secret`, which is wiped on every deploy on ephemeral hosts — logging staff out and invalidating table links. |
 | `PORT` | No | `10000` | Listen port. Many hosts inject their own `PORT`; the app honors it. |
 | `TABLE_COUNT` | No | `10` | Number of physical tables in the café. |
 | `TRUST_PROXY` | No | `1` | Proxy hops to trust for the real client IP. `1` = one cloud proxy (default). Set `0` only for a direct LAN deploy with no proxy. |
@@ -171,7 +171,7 @@ For error visibility beyond the health check, the app logs each API request (met
 - **Updating the app:** push new code, let the host rebuild (`npm ci && npm run build`) and restart. The server drains in-flight requests on `SIGTERM` (up to 10s) before exiting, so redeploys won't cut off a bill settlement mid-write.
 - **Schema changes:** if a release adds tables/columns, re-run the updated `supabase-schema.sql` in the SQL Editor (it is idempotent). The server checks the schema at boot and prints exactly what is missing if you forget.
 - **Menu dietary labels:** run `server/menu-dietary-type.sql` in Supabase Dashboard → SQL Editor before deploying the dietary badge update. Existing menu items are marked `unspecified` until an owner chooses Vegetarian or Non-vegetarian in the menu editor.
-- **Rotating `JWT_SECRET`:** change the env var and restart. This invalidates all current sessions (everyone re-logs in) — do it if you suspect the secret leaked.
+- **Rotating `JWT_SECRET`:** change the env var and restart. This invalidates all current sessions (everyone re-logs in) and permanent table QR/NFC links; regenerate the QR codes and reprogram any NFC tags — do it if you suspect the secret leaked.
 - **Rotating Supabase keys:** rotate in the Supabase dashboard, update the env var, restart.
 - **Logs:** watch stdout on your host for request lines, `UNHANDLED REJECTION` / `UNCAUGHT EXCEPTION`, and shutdown messages.
 

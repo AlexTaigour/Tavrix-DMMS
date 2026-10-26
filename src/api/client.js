@@ -76,6 +76,7 @@ export const changePassword = (currentPassword, newPassword) =>
 
 export const fetchMenu = () => api.get('/menu');
 export const fetchTables = () => api.get('/tables');
+export const fetchTableQrTokens = () => api.get('/tables/qr-tokens');
 export const fetchTableBoard = () => api.get('/tables/board');
 export const fetchTableBill = (tableNo) => api.get(`/tables/${encodeURIComponent(tableNo)}/bill`);
 // opts: { orderIds?, discount?, discountPercent?, extraCharge?, note?, creditCustomer? }

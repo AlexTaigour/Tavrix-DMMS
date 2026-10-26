@@ -43,6 +43,10 @@ const CustomerView = () => {
     () => (new URLSearchParams(window.location.search).get('table') || '').trim(),
     []
   );
+  const tableQrToken = useMemo(
+    () => (new URLSearchParams(window.location.search).get('qr') || '').trim(),
+    []
+  );
   const [menu, setMenu] = useState(null);
   const [tables, setTables] = useState([]);
   const [cart, setCart] = useState({});
@@ -246,6 +250,7 @@ const CustomerView = () => {
         phone: formData.phone,
         orderType: formData.orderType,
         table: takeaway ? undefined : formData.table,
+        tableQrToken,
         note: formData.note,
         // include the last GPS fix so the server can verify the geofence
         ...(coordsRef.current ? { lat: coordsRef.current.lat, lng: coordsRef.current.lng } : {}),
@@ -726,29 +731,20 @@ const CustomerView = () => {
               </div>
 
               {formData.orderType === 'dine' ? (
-                <div className={qrTable ? '' : 'grid grid-cols-5 gap-2'}>
-                  <p className={qrTable ? 'text-center font-bold' : 'col-span-5 text-center font-bold'}>
+                <div className={qrTable && tableQrToken ? '' : 'grid grid-cols-5 gap-2'}>
+                  <p className={qrTable && tableQrToken ? 'text-center font-bold' : 'col-span-5 text-center font-bold'}>
                     Table No.
                   </p>
-                  {qrTable ? (
+                  {qrTable && tableQrToken ? (
                     <div className="mt-2 bg-chiya text-white rounded-lg py-2.5 text-center font-bold">
                       {qrTable}
                       <span className="block text-[10px] uppercase tracking-wider opacity-80">Locked from QR</span>
                     </div>
-                  ) : tables.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setFormData((p) => ({ ...p, table: t })); setError(''); }}
-                      className={`min-h-11 rounded-lg font-bold transition-all active:scale-95 ${
-                        formData.table === t
-                          ? 'bg-chiya text-white shadow-md'
-                          : 'border-2 border-gray-100 hover:border-chiya/40'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
+                  ) : (
+                    <p className="col-span-5 rounded-xl bg-amber-50 px-3 py-3 text-center text-xs font-bold text-amber-800">
+                      Scan the QR code at your table to place a dine-in order.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className="text-center text-xs font-bold text-gray-400 bg-cream rounded-xl py-3">

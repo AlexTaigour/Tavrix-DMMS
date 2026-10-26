@@ -27,6 +27,7 @@ import settingsRoutes from './server/routes/settings.routes.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 10000;
 const TABLE_COUNT = Number(process.env.TABLE_COUNT) || 10;
+const TABLES = Array.from({ length: TABLE_COUNT }, (_, i) => String(i + 1));
 const isProd = process.env.NODE_ENV === 'production';
 
 // All state lives in Supabase and every handler is stateless, so an unhandled
@@ -120,12 +121,10 @@ app.use('/api', apiLimiter);
 // ---------------- API ----------------
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
-app.use('/api/orders', ordersRoutes);
+app.use('/api/orders', ordersRoutes(TABLES));
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/settings', settingsRoutes);
-
-const TABLES = Array.from({ length: TABLE_COUNT }, (_, i) => String(i + 1));
 
 // public: the table-number labels customers pick from
 app.get('/api/tables', (req, res) => {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../auth.js';
+import { requireAuth, signTableQrToken } from '../auth.js';
 import { validate, settleSchema } from '../validate.js';
 import { getBoard, getTableBill, settleTable, TAKEAWAY_TABLE } from '../services/tableService.js';
 
@@ -7,6 +7,10 @@ import { getBoard, getTableBill, settleTable, TAKEAWAY_TABLE } from '../services
 export default function tablesRouter(tables) {
   const router = Router();
   const knownTable = (t) => tables.includes(t) || t === TAKEAWAY_TABLE;
+
+  router.get('/qr-tokens', requireAuth('owner'), (req, res) => {
+    res.json(tables.map((tableNo) => ({ tableNo, token: signTableQrToken(tableNo) })));
+  });
 
   // Live table board — free / dining / awaiting-payment per table.
   router.get('/board', requireAuth('staff', 'owner'), async (req, res, next) => {
