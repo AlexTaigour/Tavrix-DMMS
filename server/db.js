@@ -85,6 +85,9 @@ export async function checkSchema() {
     console.error('   Then start this server again.');
   } else {
     console.error('❌ Could not reach Supabase:', error.message);
+    if (error.cause) {
+      console.error('   Fetch cause:', error.cause.code || error.cause.name, error.cause.message || '');
+    }
     console.error('   Check SUPABASE_URL and your Supabase key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY).');
   }
   process.exit(1);
