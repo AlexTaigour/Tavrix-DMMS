@@ -52,8 +52,8 @@ function TableQr({ url, table, onCopy, copied, urlBytes }) {
           </span>
         </header>
         <main className="flex min-h-0 flex-1 items-center justify-center gap-3 px-3 py-2">
-          <div className="flex h-full w-[46%] flex-col items-center justify-center gap-1.5">
-            <div className="grid aspect-square w-full max-w-[110px] flex-none place-items-center rounded-lg border-2 border-chiya bg-white p-1">
+          <div className="flex h-full w-[46%] flex-col items-center justify-center gap-1">
+            <div className="grid aspect-square w-[70%] max-w-[110px] flex-none place-items-center rounded-lg border-2 border-chiya bg-white p-1">
               <canvas ref={canvasRef} className="block" style={{ width: '100%', height: '100%' }} />
             </div>
             <p className="w-full rounded-full bg-chiya px-2 py-1 text-center text-[7px] font-black leading-tight text-white">
@@ -195,9 +195,9 @@ function buildPrintHtml(cards, logoDataUrl) {
   .table-badge { border-radius: 5mm; background: #f2d4d0; padding: 2mm 4mm; color: #8f1d27; font-size: 3mm; font-weight: 900; white-space: nowrap; }
   .content { position: absolute; inset: 22mm 12mm 19mm; display: flex; align-items: center; justify-content: center; gap: 8mm; }
   .qr-column { width: 53mm; height: 100%; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2mm; }
-  .qr-frame { width: 48mm; height: 48mm; display: grid; place-items: center; border: 1.2mm solid #c62832; border-radius: 3mm; background: white; padding: 2mm; }
+  .qr-frame { width: 43mm; height: 43mm; display: grid; place-items: center; border: 1.2mm solid #c62832; border-radius: 3mm; background: white; padding: 2mm; }
   .qr { display: block; width: 100%; height: 100%; object-fit: contain; }
-  .scan-label { width: 52mm; min-height: 9mm; display: grid; place-items: center; border-radius: 5mm; background: #c62832; color: white; text-align: center; }
+  .scan-label { width: 52mm; min-height: 7mm; display: grid; place-items: center; border-radius: 5mm; background: #c62832; color: white; text-align: center; }
   .scan-label strong { font-size: 2.5mm; letter-spacing: 0.1mm; }
   .nfc-panel { width: 69mm; height: 55mm; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 4mm; background: #8f1d27; color: white; padding: 3mm; }
   .nfc-heading { font-size: 4.5mm; font-weight: 900; letter-spacing: 0.3mm; }
