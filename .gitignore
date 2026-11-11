@@ -8,9 +8,7 @@ dist/
 # .env.example IS committed (it is a template with no secrets).
 .env
 .env.*
-!.env.example
 *.sql
-!server/menu-dietary-type.sql
 tests/
 
 # generated JWT secret + any local SQLite leftovers from the pre-Supabase era

@@ -60,7 +60,9 @@ Do this once per Supabase project.
 
 **Step 1 — create the schema.** Open *Supabase Dashboard → SQL Editor → New query*, paste the full contents of `supabase-schema.sql`, and click **Run**. It is idempotent (safe to re-run after updates).
 
-**Step 2 — lock down the database (production).** After you have set `SUPABASE_SERVICE_ROLE_KEY` and confirmed the server boots and works with it (§6):
+**Step 2 — install the atomic takeaway queue counter.** Run `server/takeaway-queue.sql` in the same SQL Editor. This creates a per-day counter used to assign distinct pickup numbers when takeaway orders arrive concurrently. Takeaway orders require this migration; apply it before deploying this version.
+
+**Step 3 — lock down the database (production).** After you have set `SUPABASE_SERVICE_ROLE_KEY` and confirmed the server boots and works with it (§6):
 
 1. Open *SQL Editor → New query*.
 2. Paste the full contents of `supabase-hardening.sql` and click **Run**.

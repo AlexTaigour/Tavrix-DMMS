@@ -184,29 +184,14 @@ export async function createOrder(data, user) {
   const createdAt = nowIso();
   const orderType = data.orderType || 'dine';
 
-  // Takeaway pickup token: today's takeaway count + 1. A concurrent-order tie
-  // would duplicate a token — harmless at counter scale (names disambiguate).
-  const dayStart = new Date();
-  dayStart.setHours(0, 0, 0, 0);
-
   // Server recomputes everything from DB prices — client totals are ignored.
-  // Menu lookup and takeaway count are independent — run them in parallel.
   const ids = data.items.map((l) => l.menuItemId);
-  const [menuRows, takeawayCount] = await Promise.all([
-    supabase
+  const menuRows = sb(
+    await supabase
       .from('menu_items')
       .select('id, name, price, is_available, is_deleted')
       .in('id', ids)
-      .then(sb),
-    orderType === 'takeaway'
-      ? supabase
-          .from('orders')
-          .select('id', { count: 'exact', head: true })
-          .eq('order_type', 'takeaway')
-          .gte('created_at', dayStart.toISOString())
-          .then(({ count }) => count ?? 0)
-      : Promise.resolve(null),
-  ]);
+  );
   const byId = new Map(menuRows.map((m) => [m.id, m]));
 
   let total = 0;
@@ -219,7 +204,29 @@ export async function createOrder(data, user) {
     lines.push({ menu_item_id: item.id, name: item.name, price: item.price, qty: line.qty });
   }
 
-  const queueNo = orderType === 'takeaway' ? takeawayCount + 1 : null;
+  let queueNo = null;
+  if (orderType === 'takeaway') {
+    const now = new Date(createdAt);
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    const queueDate = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+    queueNo = sb(
+      await supabase.rpc('next_takeaway_queue_no', {
+        counter_date: queueDate,
+        counter_day_start: dayStart.toISOString(),
+        counter_day_end: dayEnd.toISOString(),
+      })
+    );
+    if (!Number.isInteger(queueNo) || queueNo < 1) {
+      throw httpError(500, 'Could not allocate a takeaway queue number');
+    }
+  }
 
   // public_code is UNIQUE — on the (astronomically rare) collision, retry.
   let orderRow = null;
