@@ -43,18 +43,45 @@ export function signToken(user) {
 }
 
 export function signTableQrToken(tableNo) {
-  // Deterministic, non-expiring tokens keep printed QR and future NFC URLs fixed.
-  return jwt.sign({ purpose: 'table-qr', tableNo }, JWT_SECRET, { noTimestamp: true });
+  // A 128-bit HMAC keeps table links short enough for NFC tags while remaining
+  // deterministic and non-expiring like the printed QR tokens.
+  const signature = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`table-qr:${tableNo}`)
+    .digest()
+    .subarray(0, 16)
+    .toString('base64url');
+  return `${tableNo}.${signature}`;
 }
 
 export function verifyTableQrToken(token) {
   if (!token) return null;
+  // Accept existing JWT-based QR links so already-printed codes keep working.
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    return payload.purpose === 'table-qr' && typeof payload.tableNo === 'string' ? payload.tableNo : null;
+    if (payload.purpose === 'table-qr' && typeof payload.tableNo === 'string') return payload.tableNo;
+  } catch {}
+
+  const separator = token.lastIndexOf('.');
+  if (separator <= 0) return null;
+  const tableNo = token.slice(0, separator);
+  const signature = token.slice(separator + 1);
+  const expected = crypto
+    .createHmac('sha256', JWT_SECRET)
+    .update(`table-qr:${tableNo}`)
+    .digest()
+    .subarray(0, 16);
+  let actual;
+  try {
+    actual = Buffer.from(signature, 'base64url');
   } catch {
     return null;
   }
+  return actual.length === expected.length &&
+    actual.toString('base64url') === signature &&
+    crypto.timingSafeEqual(actual, expected)
+    ? tableNo
+    : null;
 }
 
 // Cookie flags. In production (public HTTPS) the session cookie MUST be Secure

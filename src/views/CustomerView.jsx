@@ -41,11 +41,17 @@ const CustomerView = () => {
   const location = useLocation();
   const menuUrl = `${location.pathname}${location.search}${location.hash}`;
   const qrTable = useMemo(
-    () => (new URLSearchParams(window.location.search).get('table') || '').trim(),
+    () => {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('t') || params.get('table') || '').trim();
+    },
     []
   );
   const tableQrToken = useMemo(
-    () => (new URLSearchParams(window.location.search).get('qr') || '').trim(),
+    () => {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('q') || params.get('qr') || '').trim();
+    },
     []
   );
   const [menu, setMenu] = useState(null);

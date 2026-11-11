@@ -6,7 +6,7 @@ import { getSocket } from '../api/socket';
 import StatusBadge from '../components/StatusBadge';
 import BrewingLoader from '../components/BrewingLoader';
 import { formatDateTime, formatRs } from '../utils/format';
-import { getTrackedOrders } from '../utils/trackedOrders';
+import { getTrackedOrders, removeTrackedOrders } from '../utils/trackedOrders';
 import { groupPendingOrders } from '../utils/groupPendingOrders';
 
 export default function MyOrders() {
@@ -37,8 +37,18 @@ export default function MyOrders() {
           }
         })
       );
+      const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000;
+      const expiredCodes = results
+        .filter(({ order }) => {
+          const createdAt = Date.parse(order?.createdAt);
+          return Number.isFinite(createdAt) && createdAt < cutoff;
+        })
+        .map(({ code }) => code);
+      removeTrackedOrders(expiredCodes);
+      const expiredCodeSet = new Set(expiredCodes);
+      const recentResults = results.filter(({ code }) => !expiredCodeSet.has(code));
       if (live) {
-        setOrders(results.reverse());
+        setOrders(recentResults.reverse());
         setLoading(false);
       }
     };

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Printer, Loader2, AlertTriangle } from 'lucide-react';
+import { Printer, Loader2, AlertTriangle, Copy, Check } from 'lucide-react';
 import { fetchTables, fetchTableQrTokens, fetchServerInfo } from '../../api/client';
 import { CAFE_NAME } from '../../utils/brand';
 
@@ -25,9 +25,9 @@ function pickBaseUrl(info) {
 }
 
 const tableUrl = (base, table, token) =>
-  `${base}/?table=${encodeURIComponent(table)}&qr=${encodeURIComponent(token)}`;
+  `${base}/?t=${encodeURIComponent(table)}&q=${encodeURIComponent(token)}`;
 
-function TableQr({ url, table }) {
+function TableQr({ url, table, onCopy, copied, urlBytes }) {
   const canvasRef = useRef(null);
   useEffect(() => {
     if (canvasRef.current) {
@@ -42,6 +42,18 @@ function TableQr({ url, table }) {
       </div>
       <p className="mt-3 text-xl font-black text-bean">Table {table}</p>
       <p className="mt-1 text-xs font-medium text-bean/50">Scan to order</p>
+      <p className={`mt-3 break-all text-left text-xs ${urlBytes > 137 ? 'text-red-600' : 'text-bean/60'}`}>
+        NFC link · {urlBytes}/137 bytes
+        <span className="mt-1 block font-mono">{url}</span>
+      </p>
+      <button
+        type="button"
+        onClick={() => onCopy(url, table)}
+        className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-espresso/15 px-3 text-sm font-bold text-espresso hover:bg-cream"
+      >
+        {copied ? <Check size={16} /> : <Copy size={16} />}
+        {copied ? 'Copied NFC link' : 'Copy NFC link'}
+      </button>
     </div>
   );
 }
@@ -103,6 +115,7 @@ export default function QrTab() {
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [printing, setPrinting] = useState(false);
+  const [copiedTable, setCopiedTable] = useState(null);
 
   useEffect(() => {
     Promise.all([fetchTables(), fetchServerInfo(), fetchTableQrTokens()])
@@ -119,6 +132,29 @@ export default function QrTab() {
     try { return ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(new URL(base).hostname); }
     catch { return true; }
   }, [base]);
+  const copyNfcLink = async (url, table) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const input = document.createElement('textarea');
+        input.value = url;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        document.body.appendChild(input);
+        try {
+          input.select();
+          if (!document.execCommand('copy')) throw new Error('clipboard access is unavailable.');
+        } finally {
+          input.remove();
+        }
+      }
+      setCopiedTable(table);
+      setError('');
+    } catch (e) {
+      setError(`Could not copy the NFC link: ${e.message || 'clipboard access is unavailable.'}`);
+    }
+  };
 
   // Render each QR to a PNG data URL, then hand a clean, self-contained document
   // to a new window for printing (one table per page).
@@ -204,7 +240,14 @@ export default function QrTab() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {tables.map((t) => (
-          <TableQr key={t} table={t} url={tableUrl(base, t, qrTokens[t])} />
+          <TableQr
+            key={t}
+            table={t}
+            url={tableUrl(base, t, qrTokens[t])}
+            urlBytes={new TextEncoder().encode(tableUrl(base, t, qrTokens[t])).length}
+            onCopy={copyNfcLink}
+            copied={copiedTable === t}
+          />
         ))}
       </div>
     </div>
