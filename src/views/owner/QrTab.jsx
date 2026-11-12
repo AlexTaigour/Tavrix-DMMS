@@ -98,12 +98,13 @@ function TableQr({ url, table, onCopy, copied, urlBytes }) {
   );
 }
 
-// Build one 150 × 100 mm landscape stand per page.
+// Build two 150 × 100 mm landscape stands per A4 portrait page.
 function buildPrintHtml(cards, logoDataUrl) {
-  const pages = cards
-    .map(
-      ({ table, dataUrl }) => `
-      <section class="page">
+  const pages = Array.from({ length: Math.ceil(cards.length / 2) }, (_, pageIndex) => {
+    const pageCards = cards.slice(pageIndex * 2, pageIndex * 2 + 2);
+    const cardMarkup = pageCards
+      .map(
+        ({ table, dataUrl }) => `
         <div class="card">
           <header class="header">
             <div class="brand">
@@ -145,9 +146,11 @@ function buildPrintHtml(cards, logoDataUrl) {
             <span class="company">by <strong>${PLATFORM_COMPANY}</strong></span>
           </footer>
         </div>
-      </section>`
-    )
-    .join('');
+      `
+      )
+      .join('');
+    return `<section class="page${pageIndex === Math.ceil(cards.length / 2) - 1 ? ' last-page' : ''}">${cardMarkup}</section>`;
+  }).join('');
   return `<!doctype html>
 <html>
 <head>
@@ -155,18 +158,23 @@ function buildPrintHtml(cards, logoDataUrl) {
 <title>Table QR Codes — ${CAFE_NAME}</title>
 <style>
   * { box-sizing: border-box; }
-  html, body { width: 150mm; margin: 0; padding: 0; }
+  html, body { width: 210mm; margin: 0; padding: 0; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: Arial, sans-serif; }
   .page {
-    width: 150mm;
-    height: 100mm;
-    padding: 0;
+    width: 210mm;
+    height: 297mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10mm;
     page-break-after: always;
     break-after: page;
   }
-  .page:last-child { page-break-after: avoid; break-after: avoid; }
+  .page.last-page { page-break-after: avoid; break-after: avoid; }
   .card {
     position: relative;
+    flex: none;
     width: 150mm;
     height: 100mm;
     overflow: hidden;
@@ -216,7 +224,7 @@ function buildPrintHtml(cards, logoDataUrl) {
   .tagline { font-size: 3.2mm; font-style: italic; font-weight: 700; }
   .company { font-size: 2.7mm; }
   .company strong { color: #f2d4d0; }
-  @page { size: 150mm 100mm; margin: 0; }
+  @page { size: A4 portrait; margin: 0; }
 </style>
 </head>
 <body>
@@ -340,7 +348,7 @@ export default function QrTab() {
             Codes point to <span className="font-mono font-bold break-all">{base || '—'}</span>
           </p>
           <p className="mt-1 text-xs font-semibold text-bean/55">
-            Stands print landscape at 150 × 100 mm. Use actual size (100%) with no margins.
+            Each card prints at 150 × 100 mm, with two cards per A4 sheet. Print on A4 portrait at actual size (100%).
           </p>
         </div>
         <button
