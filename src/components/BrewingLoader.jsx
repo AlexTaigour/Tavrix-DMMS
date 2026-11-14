@@ -1,13 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CAFE_LOGO, CAFE_NAME } from '../utils/brand';
 
-// Cozy "brewing" loader shared across the app so every waiting state feels the
-// same: a cup slowly fills with chiya-coloured tea, steam drifts up, and an
-// animated label reads while data loads.
-//   splash      → full-screen branded version (logo + name + warm gradient)
-//   fullscreen  → centred inside a min-h-screen wrapper (no branding)
-//   tone        → 'dark' for dark backgrounds (light strokes),
-//                 'light' for cream backgrounds (espresso strokes)
 export default function BrewingLoader({
   label = 'Brewing',
   splash = false,
@@ -15,54 +8,75 @@ export default function BrewingLoader({
   tone = 'dark',
 }) {
   const dark = tone === 'dark';
-  const stroke = dark ? 'border-white/70' : 'border-espresso/60';
-  const saucer = dark ? 'bg-white/60' : 'bg-espresso/40';
-  const steam = dark ? 'bg-white' : 'bg-espresso';
-  const textCls = dark ? 'text-cream/90' : 'text-espresso';
+  useEffect(() => {
+    if (!splash && !fullscreen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [fullscreen, splash]);
 
-  const cup = (
-    <div className="animate-cup-bob flex flex-col items-center" role="status" aria-live="polite">
-      <div className="relative">
-        {/* steam */}
-        <div className="pointer-events-none absolute -top-6 left-1/2 flex -translate-x-1/2 gap-1.5">
-          <span className={`steam-particle h-4 w-1 rounded-full ${steam}`} style={{ opacity: dark ? 0.4 : 0.3, animationDelay: '0s' }} />
-          <span className={`steam-particle h-5 w-1 rounded-full ${steam}`} style={{ opacity: dark ? 0.55 : 0.4, animationDelay: '0.5s' }} />
-          <span className={`steam-particle h-3 w-1 rounded-full ${steam}`} style={{ opacity: dark ? 0.35 : 0.25, animationDelay: '1s' }} />
+  const art = (
+    <div className={`brew-loader-art ${dark ? 'is-dark' : 'is-light'}`} aria-hidden="true">
+      <div className="brew-loader-aura" />
+      <div className="brew-loader-orbit brew-loader-orbit--outer"><i /></div>
+      <div className="brew-loader-orbit brew-loader-orbit--inner"><i /></div>
+      <div className="brew-loader-cup-position">
+        <div className="brew-loader-steam">
+          <i />
+          <i />
+          <i />
         </div>
-        {/* cup body */}
-        <div className={`relative h-16 w-20 overflow-hidden rounded-b-[1.6rem] rounded-t-md border-2 ${stroke} ${dark ? 'bg-white/10' : 'bg-white/60'} backdrop-blur-sm`}>
-          <div className="brew-liquid absolute inset-x-0 bottom-0 bg-gradient-to-t from-bean via-chiya to-latte">
-            <span className="brew-bubble absolute bottom-1 left-3 h-1.5 w-1.5 rounded-full bg-white/50" style={{ animationDelay: '0.2s' }} />
-            <span className="brew-bubble absolute bottom-1 left-9 h-2 w-2 rounded-full bg-white/40" style={{ animationDelay: '1s' }} />
-            <span className="brew-bubble absolute bottom-1 left-14 h-1 w-1 rounded-full bg-white/50" style={{ animationDelay: '1.7s' }} />
+        <div className="brew-loader-handle" />
+        <div className="brew-loader-cup">
+          <div className="brew-loader-tea">
+            <i />
+            <i />
+            <i />
           </div>
+          <div className="brew-loader-glass-shine" />
         </div>
-        {/* handle */}
-        <div className={`absolute top-3 -right-3 h-7 w-4 rounded-r-full border-2 ${stroke}`} />
+        <div className="brew-loader-saucer" />
       </div>
-      {/* saucer */}
-      <div className={`mt-1.5 h-1.5 w-24 rounded-full ${saucer}`} />
-      <p className={`brew-dots mt-6 text-sm font-bold tracking-wide ${textCls}`}>{label}</p>
+    </div>
+  );
+  const panelClass = [
+    'brew-loader-panel',
+    splash ? 'is-splash' : fullscreen ? 'is-fullscreen' : 'is-inline',
+    dark ? 'is-dark' : 'is-light',
+  ].join(' ');
+
+  const content = (
+    <div className={panelClass} role="status" aria-live="polite">
+      {(splash || fullscreen) && (
+        <div className="brew-loader-brand">
+          <img src={CAFE_LOGO} alt="" decoding="async" />
+          {splash && <span>{CAFE_NAME}</span>}
+        </div>
+      )}
+      {splash && <p className="brew-loader-tagline">A little warmth is on the way</p>}
+      {art}
+      <p className="brew-loader-label">
+        {label}<span className="brew-loader-ellipsis" aria-hidden="true">...</span>
+      </p>
+      <div className="brew-loader-progress" aria-hidden="true"><span /></div>
+      {splash && <p className="brew-loader-caption">MADE FRESH · SERVED WARM</p>}
     </div>
   );
 
   if (splash) {
     return (
-      <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-espresso to-bean text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(199,107,42,0.35),transparent_60%)]" />
-        <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-80 w-80 rounded-full bg-chiya/30 blur-3xl animate-halo" />
-        <div className="relative z-10 flex flex-col items-center px-6 text-center">
-          <img src={CAFE_LOGO} alt="" fetchPriority="high" decoding="async" className="w-24 h-auto drop-shadow-lg" />
-          <h3 className="mt-2 text-3xl md:text-5xl font-bold handwritten">{CAFE_NAME}</h3>
-          <div className="mt-10">{cup}</div>
-        </div>
+      <div className="brew-loader-screen is-dark">
+        <div className="brew-loader-backdrop-glow" />
+        <div className="brew-loader-backdrop-glow brew-loader-backdrop-glow--second" />
+        <div className="brew-loader-grain" />
+        {content}
       </div>
     );
   }
 
   if (fullscreen) {
-    return <div className="min-h-screen flex items-center justify-center">{cup}</div>;
+    return <div className="brew-loader-screen is-light">{content}</div>;
   }
 
-  return cup;
+  return <div className="brew-loader-inline">{content}</div>;
 }

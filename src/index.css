@@ -66,39 +66,441 @@ body::selection {
   animation: shake 0.3s ease-in-out 2;
 }
 
-/* ---- Cozy "brewing" loader + hero ambiance ---- */
+/* ---- Dimensional brewing loader ---- */
+.brew-loader-screen {
+  position: fixed;
+  isolation: isolate;
+  display: grid;
+  z-index: 100;
+  inset: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  place-items: center;
+  overflow: hidden;
+  padding: 24px;
+}
+.brew-loader-screen.is-dark {
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(198, 40, 50, 0.24), transparent 40%),
+    linear-gradient(145deg, #211719 0%, #482126 54%, #2c1b1b 100%);
+}
+.brew-loader-screen.is-light {
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(198, 40, 50, 0.1), transparent 44%),
+    linear-gradient(145deg, #fffdfa 0%, #f7e9e3 54%, #fff8f4 100%);
+}
+.brew-loader-screen::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 0.7px, transparent 0.7px);
+  background-size: 19px 19px;
+  content: "";
+  opacity: 0.2;
+  mask-image: linear-gradient(transparent, black 24%, black 76%, transparent);
+}
+.brew-loader-backdrop-glow {
+  position: absolute;
+  z-index: -1;
+  top: 12%;
+  left: 50%;
+  width: min(74vw, 430px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: rgba(215, 72, 50, 0.19);
+  filter: blur(80px);
+  transform: translateX(-50%);
+  animation: halo-pulse 5s ease-in-out infinite;
+}
+.brew-loader-backdrop-glow--second {
+  top: auto;
+  bottom: -34%;
+  left: 78%;
+  width: 300px;
+  background: rgba(245, 163, 106, 0.12);
+  animation-delay: -2.5s;
+}
+.brew-loader-grain {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.035) 48%, transparent 62%);
+  background-size: 240% 100%;
+  animation: loader-sheen 8s linear infinite;
+}
+.brew-loader-panel {
+  position: relative;
+  width: min(100%, 390px);
+  padding: 32px 28px 25px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 30px 90px rgba(67, 33, 30, 0.16), 0 8px 22px rgba(67, 33, 30, 0.07), inset 0 1px 0 white;
+  color: #382727;
+  text-align: center;
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+}
+.brew-loader-panel.is-splash {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+  box-shadow: 0 32px 100px rgba(12, 6, 8, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  color: white;
+}
+.brew-loader-panel.is-inline {
+  width: auto;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.brew-loader-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+}
+.brew-loader-brand img {
+  width: 60px;
+  height: 60px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #fff, #f8e9e3);
+  box-shadow: 0 8px 22px rgba(17, 8, 9, 0.18), inset 0 1px 0 white;
+  object-fit: contain;
+}
+.brew-loader-brand span {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.brew-loader-panel.is-fullscreen .brew-loader-brand img {
+  width: 48px;
+  height: 48px;
+  padding: 6px;
+  border-radius: 16px;
+  border-color: rgba(143, 29, 39, 0.1);
+  box-shadow: 0 5px 16px rgba(67, 33, 30, 0.1), inset 0 1px 0 white;
+}
+.brew-loader-tagline {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.brew-loader-art {
+  position: relative;
+  width: 176px;
+  height: 162px;
+  margin: 18px auto 0;
+  color: #8f1d27;
+}
+.brew-loader-panel.is-splash .brew-loader-art {
+  margin-top: 13px;
+}
+.brew-loader-panel.is-inline .brew-loader-art {
+  margin-top: 0;
+}
+.brew-loader-aura {
+  position: absolute;
+  top: 49%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(198, 40, 50, 0.18);
+  filter: blur(22px);
+  transform: translate(-50%, -50%);
+  animation: loader-aura 3.8s ease-in-out infinite;
+}
+.brew-loader-orbit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid rgba(143, 29, 39, 0.16);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.brew-loader-orbit--outer {
+  width: 148px;
+  height: 148px;
+  animation: loader-orbit 16s linear infinite;
+}
+.brew-loader-orbit--inner {
+  width: 116px;
+  height: 116px;
+  border-style: dashed;
+  border-color: rgba(143, 29, 39, 0.12);
+  animation: loader-orbit 25s linear infinite reverse;
+}
+.brew-loader-orbit i {
+  position: absolute;
+  top: 17px;
+  left: 21px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d78a56;
+  box-shadow: 0 0 12px rgba(215, 138, 86, 0.7);
+}
+.brew-loader-orbit--inner i {
+  top: auto;
+  right: 11px;
+  bottom: 21px;
+  left: auto;
+  width: 4px;
+  height: 4px;
+  background: #c62832;
+}
+.brew-loader-art.is-dark .brew-loader-orbit {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.brew-loader-art.is-dark .brew-loader-orbit--inner {
+  border-color: rgba(255, 255, 255, 0.13);
+}
+.brew-loader-cup-position {
+  position: absolute;
+  top: 51%;
+  left: 50%;
+  width: 112px;
+  height: 112px;
+  transform: translate(-50%, -50%);
+  animation: cup-bob 3.6s ease-in-out infinite;
+}
+.brew-loader-cup {
+  position: absolute;
+  z-index: 2;
+  top: 25px;
+  left: 13px;
+  width: 70px;
+  height: 65px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 12px 12px 25px 25px;
+  background: linear-gradient(115deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.52) 28%, rgba(239,220,210,.62) 72%, rgba(255,255,255,.85) 100%);
+  box-shadow: 0 12px 18px rgba(62, 30, 28, 0.2), inset 2px 1px 3px rgba(255,255,255,.96), inset -5px -5px 10px rgba(110,46,43,.12);
+}
+.brew-loader-cup::before {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 5px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, rgba(255,255,255,.75), #fff, rgba(255,255,255,.58));
+  box-shadow: 0 1px 4px rgba(71, 34, 30, 0.12);
+  content: "";
+}
+.brew-loader-tea {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  left: 2px;
+  height: 58%;
+  overflow: hidden;
+  border-radius: 0 0 22px 22px;
+  background: linear-gradient(110deg, #7a2c20, #c65335 48%, #e59b55 100%);
+  box-shadow: inset 0 5px 9px rgba(255, 208, 143, 0.4), inset 0 -7px 10px rgba(73, 24, 21, 0.28);
+  animation: loader-tea 2.8s ease-in-out infinite;
+}
+.brew-loader-tea::before {
+  position: absolute;
+  top: -4px;
+  left: -20%;
+  width: 140%;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 224, 175, 0.7);
+  box-shadow: 0 2px 5px rgba(255, 239, 209, 0.42);
+  content: "";
+}
+.brew-loader-tea i {
+  position: absolute;
+  bottom: 7px;
+  left: 25%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 235, 196, 0.7);
+  animation: loader-bubble 2s ease-out infinite;
+}
+.brew-loader-tea i:nth-child(2) {
+  left: 58%;
+  width: 3px;
+  height: 3px;
+  animation-delay: -0.7s;
+}
+.brew-loader-tea i:nth-child(3) {
+  left: 76%;
+  width: 5px;
+  height: 5px;
+  animation-delay: -1.3s;
+}
+.brew-loader-glass-shine {
+  position: absolute;
+  z-index: 4;
+  top: 11px;
+  bottom: 9px;
+  left: 8px;
+  width: 8px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, rgba(255,255,255,.76), rgba(255,255,255,.12));
+  filter: blur(1px);
+}
+.brew-loader-handle {
+  position: absolute;
+  z-index: 1;
+  top: 37px;
+  right: 7px;
+  width: 31px;
+  height: 30px;
+  border: 7px solid rgba(255, 255, 255, 0.78);
+  border-left: 0;
+  border-radius: 0 50% 50% 0;
+  background: linear-gradient(145deg, rgba(238, 219, 208, 0.66), rgba(255, 255, 255, 0.56));
+  box-shadow: 3px 4px 8px rgba(62, 30, 28, 0.14), inset -2px 1px 3px rgba(255,255,255,.8);
+}
+.brew-loader-saucer {
+  position: absolute;
+  z-index: 3;
+  bottom: 10px;
+  left: 6px;
+  width: 89px;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fff, #e8d8d1);
+  box-shadow: 0 8px 12px rgba(62, 30, 28, 0.16), inset 0 1px 2px white;
+}
+.brew-loader-steam {
+  position: absolute;
+  top: 1px;
+  left: 28px;
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  height: 31px;
+}
+.brew-loader-steam i {
+  width: 5px;
+  height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(198, 40, 50, 0), rgba(198, 40, 50, 0.36));
+  filter: blur(1px);
+  animation: loader-steam 2.2s ease-in-out infinite;
+}
+.brew-loader-steam i:nth-child(2) {
+  height: 24px;
+  animation-delay: -0.8s;
+}
+.brew-loader-steam i:nth-child(3) {
+  height: 13px;
+  animation-delay: -1.4s;
+}
+.brew-loader-art.is-dark .brew-loader-steam i {
+  background: linear-gradient(180deg, rgba(255, 230, 202, 0), rgba(255, 230, 202, 0.62));
+}
+.brew-loader-label {
+  margin-top: 1px;
+  color: #5b3130;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.brew-loader-panel.is-dark .brew-loader-label {
+  color: rgba(255, 247, 240, 0.92);
+}
+.brew-loader-panel.is-inline .brew-loader-label {
+  margin-top: 1px;
+}
+.brew-loader-ellipsis {
+  display: inline-block;
+  width: 16px;
+  text-align: left;
+  animation: loader-ellipsis 1.2s steps(4, end) infinite;
+}
+.brew-loader-progress {
+  position: relative;
+  width: 144px;
+  height: 3px;
+  margin: 16px auto 0;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(143, 29, 39, 0.12);
+}
+.brew-loader-progress span {
+  position: absolute;
+  inset: 0 auto 0 -42%;
+  width: 42%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, #c62832 45%, #e9a365 100%);
+  box-shadow: 0 0 8px rgba(198, 40, 50, 0.38);
+  animation: loader-progress 1.8s ease-in-out infinite;
+}
+.brew-loader-panel.is-dark .brew-loader-progress {
+  background: rgba(255, 255, 255, 0.15);
+}
+.brew-loader-panel.is-dark .brew-loader-progress span {
+  background: linear-gradient(90deg, transparent, #ffd5ae 48%, #fff 100%);
+  box-shadow: 0 0 10px rgba(255, 213, 174, 0.42);
+}
+.brew-loader-caption {
+  margin-top: 15px;
+  color: rgba(255, 247, 240, 0.45);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+}
+.brew-loader-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.brew-loader-inline .brew-loader-art {
+  width: 150px;
+  height: 145px;
+}
 
-/* Liquid rising and settling inside the cup */
-@keyframes brew-fill {
-  0%   { height: 14%; }
-  50%  { height: 82%; }
-  100% { height: 14%; }
+@keyframes loader-orbit {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
-.brew-liquid {
-  height: 60%;
-  animation: brew-fill 2.8s ease-in-out infinite;
+@keyframes loader-aura {
+  0%, 100% { opacity: 0.62; transform: translate(-50%, -50%) scale(0.86); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
 }
-
-/* Little bubbles drifting up through the drink */
-@keyframes brew-bubble {
-  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
-  25%  { opacity: 0.9; }
-  100% { transform: translateY(-30px) scale(1); opacity: 0; }
+@keyframes loader-tea {
+  0%, 100% { height: 52%; }
+  50% { height: 65%; }
 }
-.brew-bubble {
-  animation: brew-bubble 2.4s ease-in infinite;
+@keyframes loader-bubble {
+  0% { opacity: 0; transform: translateY(5px) scale(0.7); }
+  35% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-20px) scale(1.15); }
 }
-
-/* Animated ellipsis for "Brewing your menu…" */
-@keyframes brew-dots {
-  0%        { content: "";    }
-  25%       { content: ".";   }
-  50%       { content: "..";  }
-  75%, 100% { content: "..."; }
+@keyframes loader-steam {
+  0% { opacity: 0; transform: translateY(8px) scaleX(0.7); }
+  35% { opacity: 0.72; }
+  100% { opacity: 0; transform: translateY(-15px) scaleX(1.2); }
 }
-.brew-dots::after {
-  content: "...";
-  animation: brew-dots 1.6s steps(1) infinite;
+@keyframes loader-progress {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(345%); }
+}
+@keyframes loader-ellipsis {
+  0% { opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { opacity: 0.25; }
+}
+@keyframes loader-sheen {
+  to { background-position: -240% 0; }
 }
 
 /* Warm glowing halo behind the logo / hero */
@@ -122,8 +524,8 @@ body::selection {
 
 /* Gentle bob for the whole cup */
 @keyframes cup-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-6px); }
+  0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateY(-6px); }
 }
 .animate-cup-bob {
   animation: cup-bob 3s ease-in-out infinite;
@@ -168,9 +570,16 @@ body::selection {
 /* Respect users who prefer less motion */
 @media (prefers-reduced-motion: reduce) {
   .steam-particle,
-  .brew-liquid,
-  .brew-bubble,
-  .brew-dots::after,
+  .brew-loader-orbit,
+  .brew-loader-aura,
+  .brew-loader-cup-position,
+  .brew-loader-tea,
+  .brew-loader-tea i,
+  .brew-loader-steam i,
+  .brew-loader-progress span,
+  .brew-loader-ellipsis,
+  .brew-loader-grain,
+  .brew-loader-backdrop-glow,
   .animate-halo,
   .animate-aroma,
   .animate-cup-bob,
@@ -179,8 +588,7 @@ body::selection {
   .animate-pulse {
     animation: none !important;
   }
-  .brew-liquid { height: 72%; }
-  .brew-dots::after { content: "…"; }
+  .brew-loader-tea { height: 58%; }
   .swash-path { stroke-dashoffset: 0; animation: none; }
   .animate-gleam { display: none; }
 }

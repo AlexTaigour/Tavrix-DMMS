@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastHost from './components/Toast';
-import { Loader2 } from 'lucide-react';
+import BrewingLoader from './components/BrewingLoader';
 import { PLATFORM_NAME, PLATFORM_TAGLINE, PLATFORM_COMPANY, PLATFORM_COMPANY_URL } from './utils/brand';
 
 const CustomerView = lazy(() => import('./views/CustomerView'));
@@ -16,8 +16,8 @@ const OwnerDashboard = lazy(() => import('./views/owner/OwnerDashboard'));
 
 function RouteLoader() {
   return (
-    <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="Loading page">
-      <Loader2 className="animate-spin text-chiya" size={36} />
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <BrewingLoader label="Opening your page" tone="light" />
     </div>
   );
 }
