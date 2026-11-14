@@ -51,10 +51,15 @@ export default function OrderTrack() {
     load();
 
     const socket = getSocket();
+    let hasConnected = socket.connected;
     socket.emit('track', publicCode);
     // refetch on status push — keeps history timestamps in sync too
     const onStatus = (p) => { if (p.publicCode === publicCode) load(); };
-    const onConnect = () => { socket.emit('track', publicCode); load(); };
+    const onConnect = () => {
+      socket.emit('track', publicCode);
+      if (hasConnected) load();
+      else hasConnected = true;
+    };
     socket.on('order:status', onStatus);
     socket.on('connect', onConnect);
     // the queue ahead of us moves without our own status changing

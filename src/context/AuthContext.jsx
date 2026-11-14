@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { fetchMe, login as apiLogin, logout as apiLogout } from '../api/client';
-import { reconnectSocket } from '../api/socket';
+import { toast } from '../components/Toast';
 
 const AuthContext = createContext(null);
 
 export const HOME_BY_ROLE = { staff: '/staff', kitchen: '/kitchen', owner: '/owner' };
+
+function reconnectSocket() {
+  import('../api/socket')
+    .then(({ reconnectSocket: reconnect }) => reconnect())
+    .catch((error) => {
+      console.error('Failed to reconnect live updates after authentication.', error);
+      toast('Live updates could not reconnect. Refresh to restore them.');
+    });
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

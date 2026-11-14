@@ -60,6 +60,7 @@ export default function MyOrders() {
 
     load();
     const socket = getSocket();
+    let hasConnected = socket.connected;
     const tracked = getTrackedOrders();
     tracked.forEach(({ code }) => socket.emit('track', code));
     const onStatus = (event) => {
@@ -67,7 +68,8 @@ export default function MyOrders() {
     };
     const onConnect = () => {
       getTrackedOrders().forEach(({ code }) => socket.emit('track', code));
-      load();
+      if (hasConnected) load();
+      else hasConnected = true;
     };
     socket.on('order:status', onStatus);
     socket.on('connect', onConnect);
