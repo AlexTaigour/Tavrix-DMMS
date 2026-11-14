@@ -111,6 +111,10 @@ export const deactivateUser = (id) => api.del(`/users/${id}`);
 
 export const fetchServerInfo = () => api.get('/server-info');
 
+export const fetchGamesContent = () => api.get('/games/content');
+export const fetchGamesLeaderboard = () => api.get('/games/leaderboard');
+export const submitGameScore = (payload) => api.post('/games/score', payload);
+
 // in-café ordering lock
 export const fetchOrderGateStatus = (coords) => {
   // optional { lat, lng } feed the GPS layer so the menu knows if it may order

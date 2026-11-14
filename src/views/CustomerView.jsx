@@ -14,6 +14,16 @@ import CountUp from '../components/reactbits/CountUp';
 import { CAFE_NAME, CAFE_TAGLINE, CAFE_LOGO } from '../utils/brand';
 import { getTrackedOrders, rememberOrder } from '../utils/trackedOrders';
 
+function getCategoryEmoji(category) {
+  const label = category.toLowerCase();
+  if (label === 'all') return '🍽️';
+  if (/chiya|tea|coffee|drink|beverage/.test(label)) return '☕';
+  if (/khaja|snack|momo|dumpling/.test(label)) return '🥟';
+  if (/dessert|sweet|cake|pastry/.test(label)) return '🍰';
+  if (/juice|smoothie|cold/.test(label)) return '🥤';
+  return '🍴';
+}
+
 // Returning customers skip retyping their details.
 const saved = (() => {
   try {
@@ -349,14 +359,14 @@ const CustomerView = () => {
               A little taste<br className="hidden sm:block" /> of Nepal.
             </h1>
             <p className="mt-3 max-w-md text-sm leading-relaxed text-white/85 sm:mt-4 sm:text-base">
-              Comforting chiya, local favourites, and warm hospitality — made fresh for you.
+              Choose a favourite, add it to your order, and place it in a few taps.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-6">
               <a
                 href="#menu"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-bold text-espresso shadow-md transition hover:bg-cream"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-bold text-espresso shadow-md transition hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-chiya"
               >
-                Explore the menu <ArrowRight size={16} />
+                Browse the menu <ArrowRight size={16} />
               </a>
               {formData.table && (
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/15 px-4 py-3 text-sm font-semibold">
@@ -371,20 +381,21 @@ const CustomerView = () => {
         </div>
       </header>
 
-      <nav id="menu" className="sticky top-0 z-40 -mx-4 mt-5 border-b border-espresso/10 bg-[#fff8f6]/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
-        <div className="mx-auto flex max-w-[1440px] flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="scrollbar-hide flex gap-2 overflow-x-auto">
+      <nav id="menu" aria-label="Menu filters and search" className="sticky top-0 z-40 -mx-4 mt-4 border-b border-espresso/10 bg-[#fff8f6]/95 px-3 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 sm:py-3">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-2.5 rounded-2xl border border-espresso/10 bg-white/90 p-2.5 shadow-sm md:flex-row md:items-center md:justify-between">
+          <div role="group" aria-label="Filter menu by category" className="scrollbar-hide flex gap-2 overflow-x-auto">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 aria-pressed={activeCategory === cat}
-                className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya focus-visible:ring-offset-2 ${
                   activeCategory === cat
                     ? 'bg-chiya text-white shadow-sm'
                     : 'border border-espresso/10 bg-white text-bean/75 hover:border-chiya/40 hover:text-chiya'
                 }`}
               >
+                <span aria-hidden="true">{getCategoryEmoji(cat)}</span>
                 {cat}
               </button>
             ))}
@@ -395,15 +406,16 @@ const CustomerView = () => {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Find something delicious"
+              placeholder="Search dishes and drinks"
               aria-label="Search the menu"
-              className="w-full rounded-full border border-espresso/10 bg-white py-3 pl-10 pr-10 text-sm font-medium text-bean outline-none transition focus:border-chiya focus:ring-2 focus:ring-chiya/15"
+              className="min-h-11 w-full rounded-full border border-espresso/10 bg-[#fffdfc] py-2.5 pl-10 pr-12 text-sm font-medium text-bean outline-none transition placeholder:text-bean/40 focus:border-chiya focus:ring-2 focus:ring-chiya/15"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-bean/55 hover:bg-cream"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-bean/55 transition-colors hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chiya"
               >
                 <X size={14} />
               </button>
@@ -413,7 +425,7 @@ const CustomerView = () => {
       </nav>
 
       <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <main>
+        <main className="min-w-0">
       {!canOrder && (
         <div className="mb-6 flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-3 sm:p-4">
           <div className="shrink-0 rounded-xl bg-chiya p-2 text-white">
@@ -455,6 +467,18 @@ const CustomerView = () => {
         </div>
       )}
 
+      <div className="mb-5 mt-5 flex items-end justify-between gap-3 sm:mb-7">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-chiya">Made fresh for you</p>
+          <h2 className="mt-1 font-serif text-2xl font-bold tracking-tight text-bean sm:text-3xl">
+            {search ? 'Search results' : activeCategory === 'All' ? 'Our menu' : activeCategory}
+          </h2>
+        </div>
+        <span aria-live="polite" className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-bean/60 shadow-sm">
+          {filteredMenu.length} {filteredMenu.length === 1 ? 'item' : 'items'}
+        </span>
+      </div>
+
       <ClickSpark>
         <div className="space-y-9">
           {menuSections.map((section) => (
@@ -471,12 +495,14 @@ const CustomerView = () => {
                 </div>
                 <span className="shrink-0 pb-1 text-xs font-medium text-bean/50">
                   {section.items.length} {section.items.length === 1 ? 'item' : 'items'}
+                  {section.items.length > 1 && <span className="ml-1 sm:hidden">· Swipe for more</span>}
                 </span>
               </div>
               <AnimatedList
                 items={section.items}
                 keyOf={(item) => item.id}
-                className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4"
+                className="scrollbar-hide flex w-full min-w-0 max-w-full snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain pb-2"
+                itemClassName="w-[168px] shrink-0 snap-start min-[480px]:w-[180px] sm:w-[200px] lg:w-[220px]"
                 renderItem={(item) => (
                   <MenuCard
                     item={item}

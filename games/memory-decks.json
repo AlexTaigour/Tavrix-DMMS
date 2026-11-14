@@ -1,0 +1,28 @@
+{
+  "decks": [
+    {
+      "id": "everyday-words",
+      "name": "Everyday Learning",
+      "pairs": [
+        { "id": "sun", "left": "Sun", "right": "सूर्य" },
+        { "id": "water", "left": "Water", "right": "पानी" },
+        { "id": "tree", "left": "Tree", "right": "रुख" },
+        { "id": "book", "left": "Book", "right": "पुस्तक" },
+        { "id": "cat", "left": "Cat", "right": "बिरालो" },
+        { "id": "flower", "left": "Flower", "right": "फूल" }
+      ]
+    },
+    {
+      "id": "numbers",
+      "name": "Numbers & Names",
+      "pairs": [
+        { "id": "one", "left": "1", "right": "One" },
+        { "id": "two", "left": "2", "right": "Two" },
+        { "id": "three", "left": "3", "right": "Three" },
+        { "id": "four", "left": "4", "right": "Four" },
+        { "id": "five", "left": "5", "right": "Five" },
+        { "id": "six", "left": "6", "right": "Six" }
+      ]
+    }
+  ]
+}

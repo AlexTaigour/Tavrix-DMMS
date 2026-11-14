@@ -12,63 +12,75 @@ export default function StatusTimeline({ order }) {
   for (const h of order.history || []) reachedAt[h.toStatus] = h.changedAt;
 
   return (
-    <ol className="space-y-0">
+    <div>
+      <ol aria-label="Order status timeline" className="grid grid-cols-5 gap-0">
       {TIMELINE_STEPS.map((step, i) => {
         const done = !cancelled && i < currentIdx;
         const active = !cancelled && i === currentIdx;
         const meta = STATUS_META[step];
         return (
-          <li key={step} className="flex gap-4">
-            <div className="flex flex-col items-center">
+          <li key={step} aria-current={active ? 'step' : undefined} className="relative flex min-w-0 flex-col items-center text-center">
+            {i > 0 && (
+              <span
+                aria-hidden="true"
+                className={`absolute left-0 top-4 z-0 h-0.5 w-1/2 ${!cancelled && i <= currentIdx ? 'bg-green-500' : 'bg-gray-200'}`}
+              />
+            )}
+            {i < TIMELINE_STEPS.length - 1 && (
+              <span
+                aria-hidden="true"
+                className={`absolute right-0 top-4 z-0 h-0.5 w-1/2 ${!cancelled && i < currentIdx ? 'bg-green-500' : 'bg-gray-200'}`}
+              />
+            )}
+            <div className="relative z-10 flex min-h-[3.75rem] flex-col items-center">
               <motion.div
                 initial={false}
                 animate={{
-                  scale: active ? 1.15 : 1,
-                  backgroundColor: done ? '#22c55e' : active ? '#c76b2a' : '#e5e7eb',
+                  scale: active ? 1.08 : 1,
+                  backgroundColor: done ? '#22c55e' : active ? '#c62832' : '#e5e7eb',
                 }}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white shrink-0"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm sm:h-9 sm:w-9"
               >
                 {done ? (
-                  <Check size={18} />
+                  <Check size={16} />
                 ) : (
-                  <span className={`font-black text-sm ${active ? '' : 'text-gray-400'}`}>{i + 1}</span>
+                  <span className={`text-xs font-black ${active ? '' : 'text-gray-400'}`}>{i + 1}</span>
                 )}
               </motion.div>
-              {i < TIMELINE_STEPS.length - 1 && (
-                <div className={`w-1 h-8 rounded ${done ? 'bg-green-500' : 'bg-gray-200'}`} />
-              )}
             </div>
-            <div className="pt-1.5">
-              <p className={`font-black ${active ? 'text-chiya' : done ? 'text-bean' : 'text-gray-400'}`}>
+            <div className="w-full px-0.5">
+              <p className={`break-words text-[10px] font-black leading-tight sm:text-xs ${active ? 'text-chiya' : done ? 'text-bean' : 'text-gray-400'}`}>
                 {meta.label}
                 {active && (
                   <motion.span
                     animate={{ opacity: [1, 0.3, 1] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="ml-2 inline-block w-2 h-2 rounded-full bg-chiya"
+                    aria-label="Current step"
+                    className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-chiya align-middle"
                   />
                 )}
               </p>
               {reachedAt[step] && (
-                <p className="text-xs text-gray-400 font-bold">{formatTime(reachedAt[step])}</p>
+                <p className="mt-1 text-[9px] font-bold leading-tight text-gray-400 sm:text-[10px]">{formatTime(reachedAt[step])}</p>
               )}
             </div>
           </li>
         );
       })}
+      </ol>
       {cancelled && (
-        <li className="flex gap-4 mt-2">
-          <div className="w-9 h-9 rounded-full bg-red-500 flex items-center justify-center text-white shrink-0">
+        <div role="status" className="mt-3 flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-red-800">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500 text-white">
             <X size={18} />
           </div>
-          <div className="pt-1.5">
-            <p className="font-black text-red-500">Cancelled</p>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <p className="text-xs font-black">Order cancelled</p>
             {reachedAt.cancelled && (
-              <p className="text-xs text-gray-400 font-bold">{formatTime(reachedAt.cancelled)}</p>
+              <p className="shrink-0 text-[10px] font-bold text-red-700/60">{formatTime(reachedAt.cancelled)}</p>
             )}
           </div>
-        </li>
+        </div>
       )}
-    </ol>
+    </div>
   );
 }

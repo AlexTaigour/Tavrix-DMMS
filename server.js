@@ -8,6 +8,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import fs from 'fs/promises';
 
 import { supabase, checkSchema } from './server/db.js';
 import { runMigration } from './server/migrate.js';
@@ -29,6 +30,43 @@ const PORT = Number(process.env.PORT) || 10000;
 const TABLE_COUNT = Number(process.env.TABLE_COUNT) || 10;
 const TABLES = Array.from({ length: TABLE_COUNT }, (_, i) => String(i + 1));
 const isProd = process.env.NODE_ENV === 'production';
+const GAME_MAX_POINTS = { quiz: 60, memory: 100, maths: 500 };
+const gameStore = { dayKey: getLocalDateKey(new Date()), scores: [] };
+
+function getLocalDateKey(date = new Date()) {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const parts = formatter.formatToParts(date);
+  const map = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value;
+  }
+  return `${map.year}-${map.month}-${map.day}`;
+}
+
+function pruneGameScores() {
+  const dayKey = getLocalDateKey(new Date());
+  if (gameStore.dayKey !== dayKey) {
+    gameStore.dayKey = dayKey;
+    gameStore.scores = [];
+  }
+}
+
+async function readGameBank() {
+  const [quizText, memoryText] = await Promise.all([
+    fs.readFile(path.join(__dirname, 'games', 'quiz-questions.json'), 'utf8'),
+    fs.readFile(path.join(__dirname, 'games', 'memory-decks.json'), 'utf8'),
+  ]);
+  return {
+    quiz: JSON.parse(quizText).questions || [],
+    memory: JSON.parse(memoryText).decks || [],
+  };
+}
 
 // All state lives in Supabase and every handler is stateless, so an unhandled
 // promise rejection (e.g. a Supabase hiccup inside a fire-and-forget audit
@@ -154,10 +192,86 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/api/games/content', async (req, res, next) => {
+  try {
+    pruneGameScores();
+    const bank = await readGameBank();
+    res.json({
+      quiz: bank.quiz,
+      memory: { decks: bank.memory },
+      date: gameStore.dayKey,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.get('/api/games/leaderboard', (req, res) => {
+  pruneGameScores();
+  const totals = new Map();
+  for (const score of gameStore.scores) {
+    totals.set(score.tableNumber, (totals.get(score.tableNumber) || 0) + Number(score.points || 0));
+  }
+  const leaderboard = Array.from(totals.entries())
+    .map(([tableNumber, total]) => ({ tableNumber, total }))
+    .sort((a, b) => b.total - a.total || Number(a.tableNumber) - Number(b.tableNumber));
+
+  res.json({
+    date: gameStore.dayKey,
+    leaderboard: leaderboard.map((entry, index) => ({ ...entry, rank: index + 1 })),
+    playerOfDay: leaderboard[0] ? leaderboard[0].tableNumber : null,
+  });
+});
+
+app.get('/api/games', (req, res) => {
+  res.redirect('/api/games/content');
+});
+
+function submitGameScore(req, res) {
+  const { tableNumber, game, points, timestamp } = req.body || {};
+  const table = String(tableNumber ?? '').trim();
+  const gameName = String(game ?? '').trim().toLowerCase();
+  const value = Number(points);
+  const dateIso = String(timestamp || '').trim();
+
+  pruneGameScores();
+
+  if (!/^[0-9]+$/.test(table) || !TABLES.includes(table)) {
+    return res.status(400).json({ error: 'Table number is invalid.' });
+  }
+  if (!['quiz', 'memory', 'maths'].includes(gameName)) {
+    return res.status(400).json({ error: 'Game must be quiz, memory, or maths.' });
+  }
+  if (!Number.isFinite(value) || value < 0 || value > (GAME_MAX_POINTS[gameName] ?? 500)) {
+    return res.status(400).json({ error: 'Score is outside the valid range for this game.' });
+  }
+  if (!dateIso || Number.isNaN(Date.parse(dateIso))) {
+    return res.status(400).json({ error: 'Timestamp is required.' });
+  }
+
+  const scoreTs = new Date(dateIso);
+  if (getLocalDateKey(scoreTs) !== gameStore.dayKey) {
+    return res.status(400).json({ error: 'The score timestamp is not for today.' });
+  }
+
+  gameStore.scores.push({
+    tableNumber: table,
+    game: gameName,
+    points: Math.round(value),
+    timestamp: scoreTs.toISOString(),
+  });
+
+  return res.status(201).json({ ok: true, date: gameStore.dayKey });
+}
+
+app.post('/api/games/score', submitGameScore);
+app.post('/api/games/submit-score', submitGameScore);
+
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
 // ---------------- static frontend ----------------
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
+app.use('/games', express.static(path.join(__dirname, 'games')));
 app.use(express.static(path.join(__dirname, 'dist')));
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
@@ -200,6 +314,27 @@ server.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ Tavrix DMMS server on http://0.0.0.0:${PORT}`);
   console.log(`   db: ${users} users, ${menu} menu items, ${orders} orders (Supabase)`);
 });
+
+function scheduleGameCleanup() {
+  if (globalThis.__gameCleanupScheduled) return;
+  globalThis.__gameCleanupScheduled = true;
+  pruneGameScores();
+  const runCleanup = () => {
+    pruneGameScores();
+    const now = new Date();
+    const nextMidnight = new Date(now);
+    nextMidnight.setHours(24, 0, 0, 0);
+    const waitMs = Math.max(60000, nextMidnight.getTime() - now.getTime());
+    setTimeout(runCleanup, waitMs);
+  };
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0);
+  const waitMs = Math.max(60000, nextMidnight.getTime() - now.getTime());
+  setTimeout(runCleanup, waitMs);
+  setInterval(() => pruneGameScores(), 60_000);
+}
+scheduleGameCleanup();
 
 // ---------------- graceful shutdown ----------------
 // Cloud hosts send SIGTERM on redeploy; close the server so in-flight requests

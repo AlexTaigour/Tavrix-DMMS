@@ -1,0 +1,22 @@
+{
+  "questions": [
+    { "id": "basic-1", "category": "basic", "difficulty": 1, "question": "How many days are there in a week?", "options": ["5", "6", "7", "8"], "answerIndex": 2 },
+    { "id": "basic-2", "category": "basic", "difficulty": 1, "question": "Which colour is made by mixing blue and yellow?", "options": ["Orange", "Green", "Purple", "Red"], "answerIndex": 1 },
+    { "id": "basic-3", "category": "basic", "difficulty": 1, "question": "Which animal says 'moo'?", "options": ["Dog", "Cow", "Cat", "Duck"], "answerIndex": 1 },
+    { "id": "basic-4", "category": "basic", "difficulty": 1, "question": "What comes after 12?", "options": ["11", "13", "14", "15"], "answerIndex": 1 },
+    { "id": "basic-5", "category": "basic", "difficulty": 1, "question": "Which body part helps us hear?", "options": ["Eyes", "Ears", "Hands", "Feet"], "answerIndex": 1 },
+    { "id": "basic-6", "category": "basic", "difficulty": 1, "question": "The sun rises in the ________.", "options": ["West", "North", "South", "East"], "answerIndex": 3 },
+    { "id": "basic-7", "category": "basic", "difficulty": 1, "question": "Which animal is known for being the biggest mammal?", "options": ["Elephant", "Whale", "Giraffe", "Lion"], "answerIndex": 1 },
+    { "id": "basic-8", "category": "basic", "difficulty": 1, "question": "How many sides does a triangle have?", "options": ["2", "3", "4", "5"], "answerIndex": 1 },
+    { "id": "society-1", "category": "society", "difficulty": 2, "question": "What is a community?", "options": ["A place with only one person", "A group of people living or working together", "A kind of animal", "A school subject"], "answerIndex": 1 },
+    { "id": "society-2", "category": "society", "difficulty": 2, "question": "Which is a good way to help your neighbours?", "options": ["Ignore them", "Be kind and respectful", "Shout loudly", "Run away"], "answerIndex": 1 },
+    { "id": "family-1", "category": "family", "difficulty": 2, "question": "Who is your father’s mother?", "options": ["Aunt", "Grandmother", "Sister", "Cousin"], "answerIndex": 1 },
+    { "id": "family-2", "category": "family", "difficulty": 2, "question": "Which family member is your mother’s brother?", "options": ["Uncle", "Brother", "Grandfather", "Nephew"], "answerIndex": 0 },
+    { "id": "relationships-1", "category": "relationships", "difficulty": 3, "question": "Which action shows good manners?", "options": ["Talking over someone", "Listening politely", "Ignoring elders", "Running inside"], "answerIndex": 1 },
+    { "id": "relationships-2", "category": "relationships", "difficulty": 3, "question": "Which festival is widely celebrated in many families with lights and sweets?", "options": ["New Year", "Diwali", "Summer holiday", "Birthday"], "answerIndex": 1 },
+    { "id": "society-3", "category": "society", "difficulty": 3, "question": "What is one way to be a good citizen?", "options": ["Litter in public spaces", "Follow rules and care for others", "Take things without asking", "Ignore school"], "answerIndex": 1 },
+    { "id": "family-3", "category": "family", "difficulty": 3, "question": "Which relative is a child of your aunt or uncle?", "options": ["Cousin", "Grandfather", "Father", "Sibling"], "answerIndex": 0 },
+    { "id": "relationships-3", "category": "relationships", "difficulty": 3, "question": "How should we treat classmates at school?", "options": ["With kindness and respect", "With teasing", "By ignoring them", "By taking their lunch"], "answerIndex": 0 },
+    { "id": "society-4", "category": "society", "difficulty": 3, "question": "Why do people celebrate festivals together?", "options": ["To share joy and community spirit", "Because it is mandatory for everyone to stay home", "To forget their families", "To make the day longer"], "answerIndex": 0 }
+  ]
+}

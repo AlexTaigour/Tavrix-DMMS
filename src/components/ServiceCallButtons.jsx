@@ -30,27 +30,28 @@ export default function ServiceCallButtons({ table }) {
 
   const btn = (kind, Icon, label, sentLabel) => (
     <button
+      type="button"
       onClick={() => call(kind)}
       disabled={busy === kind || sent[kind]}
-      className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm transition-all active:scale-95 ${
+      className={`flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl px-2 py-3 text-xs font-black transition-all active:scale-[0.98] sm:rounded-2xl sm:py-3.5 sm:text-sm ${
         sent[kind]
           ? 'bg-green-50 text-green-600 border-2 border-green-200'
           : 'bg-white text-espresso border-2 border-espresso/15 hover:border-chiya shadow-sm'
       }`}
     >
       {busy === kind ? (
-        <Loader2 size={17} className="animate-spin" />
+        <Loader2 size={16} className="shrink-0 animate-spin" />
       ) : sent[kind] ? (
-        <Check size={17} />
+        <Check size={16} className="shrink-0" />
       ) : (
-        <Icon size={17} />
+        <Icon size={16} className="shrink-0" />
       )}
-      {sent[kind] ? sentLabel : label}
+      <span className="truncate">{sent[kind] ? sentLabel : label}</span>
     </button>
   );
 
   return (
-    <div className="flex gap-3 mt-4">
+    <div className="mt-3 flex gap-2 sm:gap-3">
       {btn('waiter', ConciergeBell, 'Call waiter', 'Staff notified')}
       {btn('bill', ReceiptText, 'Ask for bill', 'Bill requested')}
     </div>

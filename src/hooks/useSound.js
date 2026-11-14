@@ -12,14 +12,14 @@ export function useSound(storageKey = 'tvx_sound') {
     });
   }, [storageKey]);
 
-  const chime = useCallback(() => {
+  const playTones = useCallback((tones) => {
     if (localStorage.getItem(storageKey) === 'off') return;
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const play = (freq, start, dur) => {
+      tones.forEach(([freq, start, dur, type = 'sine']) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'sine';
+        osc.type = type;
         osc.frequency.value = freq;
         gain.gain.setValueAtTime(0.001, ctx.currentTime + start);
         gain.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + start + 0.02);
@@ -27,12 +27,18 @@ export function useSound(storageKey = 'tvx_sound') {
         osc.connect(gain).connect(ctx.destination);
         osc.start(ctx.currentTime + start);
         osc.stop(ctx.currentTime + start + dur);
-      };
-      play(880, 0, 0.35);
-      play(1174.66, 0.18, 0.45);
-      setTimeout(() => ctx.close(), 1200);
+      });
+      setTimeout(() => ctx.close(), 1000);
     } catch {}
   }, [storageKey]);
 
-  return { enabled, toggle, chime };
+  const chime = useCallback(() => {
+    playTones([[880, 0, 0.35], [1174.66, 0.18, 0.45]]);
+  }, [playTones]);
+
+  const wrong = useCallback(() => {
+    playTones([[330, 0, 0.12, 'square'], [220, 0.16, 0.18, 'square']]);
+  }, [playTones]);
+
+  return { enabled, toggle, chime, wrong };
 }

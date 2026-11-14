@@ -4,6 +4,7 @@ import DietaryBadge from './DietaryBadge';
 
 export const MenuCard = ({ item, quantity, onUpdateQuantity, onOpenDetail }) => {
   const soldOut = item.isAvailable === false;
+  const description = typeof item.description === 'string' ? item.description.trim() : '';
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
@@ -43,7 +44,7 @@ export const MenuCard = ({ item, quantity, onUpdateQuantity, onOpenDetail }) => 
         )}
       </div>
 
-      <div className="flex min-h-[142px] flex-1 flex-col p-3 sm:min-h-[150px] sm:p-3.5">
+      <div className={`flex ${description ? 'min-h-[142px] sm:min-h-[150px]' : 'min-h-[110px] sm:min-h-[118px]'} flex-1 flex-col p-3 sm:p-3.5`}>
         <div className="flex items-start justify-between gap-2">
           <h3 className="min-w-0 flex-1 text-sm font-bold leading-snug text-bean sm:text-base">
             <button
@@ -58,9 +59,11 @@ export const MenuCard = ({ item, quantity, onUpdateQuantity, onOpenDetail }) => 
             <DietaryBadge dietaryType={item.dietaryType} />
           </div>
         </div>
-        <p className="mt-1 min-h-8 text-xs leading-relaxed text-bean/60">
-          {item.description && <span className="line-clamp-2">{item.description}</span>}
-        </p>
+        {description && (
+          <p className="mt-1 min-h-8 text-xs leading-relaxed text-bean/60">
+            <span className="line-clamp-2">{description}</span>
+          </p>
+        )}
 
         <div className="mt-auto border-t border-espresso/10 pt-2.5">
           <p className="whitespace-nowrap text-sm font-black text-bean sm:text-base">Rs. {item.price}</p>
