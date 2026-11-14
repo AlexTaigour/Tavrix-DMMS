@@ -1,4 +1,4 @@
-# Folsom Cafe & Resturent — Codebase Overview
+# Tavrix DMMS — Codebase Overview
 
 Browser-based tea-shop POS. Customers scan a QR at their table, order from their phone, and track their order live; staff run the counter, kitchen runs a KDS board, and the owner gets analytics, menu, users, and a credit (udhaaro) ledger.
 
@@ -41,7 +41,7 @@ server/
     tableService.js       table board, combined bill, settle (payment)
     analyticsService.js   owner analytics queries
 src/
-  main.jsx, App.jsx       router + AuthProvider + global <ToastHost />
+  main.jsx, App.jsx         lazy route router + AuthProvider + global <ToastHost />
   api/client.js           fetch wrapper (timeout + GET retry) + all typed API helpers
   api/socket.js           lazy socket.io singleton, reconnectSocket() after login/logout
   context/AuthContext.jsx user session state
@@ -56,15 +56,24 @@ src/
     StaffView.jsx         counter: order cards, table board, service calls
     KitchenView.jsx       KDS lanes (New/Accepted/Preparing) + 86-board StockModal
     owner/                OwnerDashboard shell + Analytics/Menu/Users/Credit/DayReport/Qr tabs
-  components/             OrderCard, TableBoard, TableBillModal, NewOrderModal,
-                          Toast (toast() + ToastHost), StatusBadge/Timeline,
-                          ServiceCalls*, reactbits/ animation primitives
+  components/             BrewingLoader, OrderCard, TableBoard, TableBillModal,
+                          NewOrderModal, Toast (toast() + ToastHost),
+                          StatusBadge/Timeline, ServiceCalls*, reactbits/
+                          animation primitives
   utils/                  format.js, printBill.js
 ```
 
 ## Data flow
 
 **REST for loads and writes, socket.io pushes for live updates.** Views fetch once on mount, then patch local state from socket events; socket `reconnect` triggers a full refetch to cover missed events.
+
+### Client startup and loading
+
+- Route views and owner tabs are lazy-loaded, so the browser only downloads the active screen's code.
+- Public screens do not make an `/api/auth/me` request. `ProtectedRoute` starts a single, shared session check only when a staff, kitchen, or owner route is opened.
+- The customer menu requests menu data first. The order-gate status check follows after that response; the unused customer tables request has been removed. The server still validates ordering eligibility when an order is submitted.
+- Auth-triggered Socket.IO reconnection is dynamically imported. Screens that need live updates load the socket client with that screen, while the initial socket connection does not repeat the screen's initial order fetch.
+- `BrewingLoader` is shared by route, auth, and data-loading states. It provides full-screen and inline styles, respects reduced-motion preferences, and uses the small 256×256 WebP brand mark (`resources/logo.webp`, about 16 KB).
 
 Socket rooms (`server/sockets.js`):
 - Staff sockets join their role room (`staff` / `kitchen`; `owner` joins all three).
@@ -97,3 +106,4 @@ These are deliberate patterns — keep them when adding features:
 6. **Socket-event refetch discipline.** Patch local state when the payload has what you need; when state is server-derived (TableBoard), refetch — but filter to events that can actually change it and debounce bursts (~300ms).
 7. **Server recomputes money.** Client-sent totals are ignored; prices come from `menu_items` at order time and are snapshotted onto `order_items`.
 8. **Short TTL caches for slow-changing hot-path reads** — e.g. the 60s `avgPrepCache` behind queue ETAs in `orderService.js`.
+9. **Prioritize the visible screen.** Fetch the data needed to render the active screen first; defer secondary checks until the primary screen data has resolved. Avoid requests for hidden tabs or data the screen does not use.
