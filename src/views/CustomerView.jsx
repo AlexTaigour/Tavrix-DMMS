@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { ShoppingCart, X, Utensils, ClipboardList, CheckCircle2, Search, Plus, Minus, Trash2, Receipt, Wifi, Navigation, ArrowRight, Clock3, Flame, MapPin } from 'lucide-react';
-import { fetchMenu, fetchTables, placeOrder, fetchOrderGateStatus } from '../api/client';
+import { fetchMenu, placeOrder, fetchOrderGateStatus } from '../api/client';
 import { getSocket } from '../api/socket';
 import { MenuCard } from '../components/MenuCard';
 import ItemDetailModal from '../components/ItemDetailModal';
@@ -65,7 +65,6 @@ const CustomerView = () => {
     []
   );
   const [menu, setMenu] = useState(null);
-  const [tables, setTables] = useState([]);
   const [cart, setCart] = useState({});
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showTrackOrder, setShowTrackOrder] = useState(false);
@@ -175,17 +174,22 @@ const CustomerView = () => {
   };
 
   useEffect(() => {
-    Promise.all([fetchMenu(), fetchTables()])
-      .then(([m, t]) => { setMenu(m); setTables(t); })
-      .catch(() => setMenu([]));
-
-    checkGate(null); // first pass without location
+    let active = true;
+    fetchMenu()
+      .then((m) => { if (active) setMenu(m); })
+      .catch(() => { if (active) setMenu([]); })
+      .finally(() => {
+        if (active) setTimeout(() => { if (active) checkGate(null); }, 0);
+      });
 
     // live menu updates when the owner edits items
     const socket = getSocket();
     const refresh = () => fetchMenu().then(setMenu).catch(() => {});
     socket.on('menu:updated', refresh);
-    return () => socket.off('menu:updated', refresh);
+    return () => {
+      active = false;
+      socket.off('menu:updated', refresh);
+    };
   }, []);
 
   const categories = useMemo(
